@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Сборы в поход — 2 ночи, 10 человек</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fog:#E4E9E5;
+    --paper:#F6F8F5;
+    --spruce:#16302A;
+    --moss:#4A6B5C;
+    --line:#C6D0C9;
+    --amber:#E09A2B;
+    --brick:#AE4030;
+    --shadow:0 1px 0 var(--line), 0 12px 28px -22px rgba(22,48,42,.6);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--fog);
+    color:var(--spruce);
+    font-family:'Golos Text',system-ui,sans-serif;
+    font-size:16px;line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:0 16px 80px}
+
+  /* ---- шапка ---- */
+  header.top{
+    background:var(--spruce);color:var(--paper);
+    margin:0 -16px 22px;padding:26px 22px 20px;
+    border-bottom:3px solid var(--amber);
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--amber);margin:0 0 10px
+  }
+  h1{
+    font-family:'Unbounded',sans-serif;font-weight:800;
+    font-size:clamp(26px,6vw,44px);line-height:1;letter-spacing:-.02em;
+    margin:0 0 14px;text-transform:uppercase;
+  }
+  .facts{
+    display:flex;flex-wrap:wrap;gap:8px 18px;
+    font-family:'JetBrains Mono',monospace;font-size:12px;color:#B9C9C0
+  }
+  .facts b{color:var(--paper);font-weight:500}
+
+  /* ---- общий прогресс ---- */
+  .status{
+    position:sticky;top:0;z-index:20;
+    background:rgba(228,233,229,.94);backdrop-filter:blur(8px);
+    margin:0 -16px;padding:10px 16px;border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  }
+  .status .n{font-family:'Unbounded',sans-serif;font-weight:600;font-size:15px;white-space:nowrap}
+  .status .n span{color:var(--moss);font-weight:400}
+  .saveflag{
+    margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;
+    color:var(--moss);white-space:nowrap
+  }
+  .saveflag.err{color:var(--brick)}
+
+  /* ---- сигнатурный индикатор: оттяжка из сегментов ---- */
+  .meter{display:flex;gap:3px;flex:1;min-width:120px;height:8px;align-items:center}
+  .meter i{
+    flex:1;height:3px;background:var(--line);border-radius:2px;
+    transition:background .18s ease,height .18s ease
+  }
+  .meter i.on{background:var(--amber);height:8px}
+
+  /* ---- секции ---- */
+  .section-head{
+    display:flex;align-items:baseline;gap:12px;
+    margin:34px 0 12px;padding-bottom:8px;border-bottom:2px solid var(--spruce)
+  }
+  .section-head h2{
+    font-family:'Unbounded',sans-serif;font-weight:600;text-transform:uppercase;
+    font-size:clamp(15px,3.4vw,20px);letter-spacing:-.01em;margin:0
+  }
+  .section-head .sub{
+    font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--moss);margin-left:auto;text-align:right
+  }
+
+  .card{
+    background:var(--paper);border:1px solid var(--line);border-radius:4px;
+    margin:0 0 12px;box-shadow:var(--shadow);overflow:hidden
+  }
+  .card-head{
+    display:flex;align-items:center;gap:12px;padding:12px 14px 10px;
+    border-bottom:1px dashed var(--line)
+  }
+  .card-head input.title{
+    font-family:'Unbounded',sans-serif;font-weight:600;font-size:14px;
+    border:0;background:transparent;color:var(--spruce);padding:2px 4px;
+    border-radius:3px;flex:0 1 auto;min-width:60px;width:auto
+  }
+  .card-head .meter{max-width:200px}
+  .count{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--moss);white-space:nowrap}
+
+  ul{list-style:none;margin:0;padding:4px 0}
+  li.row{
+    display:grid;grid-template-columns:26px 1fr 190px 26px 26px;
+    grid-template-areas:"b t w n x" ". note note note note";
+    gap:6px 8px;align-items:center;padding:5px 14px;
+  }
+  li.row .box{grid-area:b}
+  li.row .txt{grid-area:t}
+  li.row .who{grid-area:w}
+  li.row .note-btn{grid-area:n}
+  li.row .x{grid-area:x}
+  li.row .note-wrap{grid-area:note;display:none}
+  li.row.open .note-wrap{display:block}
+  textarea.note{
+    width:100%;font-family:'Golos Text',sans-serif;font-size:14px;color:var(--spruce);
+    background:rgba(74,107,92,.07);border:1px solid var(--line);border-left:3px solid var(--amber);
+    border-radius:3px;padding:7px 9px;margin:0 0 6px;resize:vertical;min-height:52px
+  }
+  textarea.note::placeholder{color:#9AAAA1}
+  .note-btn{
+    border:0;background:transparent;cursor:pointer;padding:2px;border-radius:3px;
+    color:#B4C0B8;line-height:0
+  }
+  .note-btn:hover{color:var(--spruce);background:rgba(74,107,92,.1)}
+  .note-btn.has{color:var(--amber)}
+  .note-btn svg{width:17px;height:17px;display:block}
+  li.row:hover{background:rgba(74,107,92,.05)}
+  li.row.done .txt{color:var(--moss);text-decoration:line-through;text-decoration-color:var(--amber)}
+
+  /* чекбокс */
+  .box{
+    appearance:none;-webkit-appearance:none;margin:0;
+    width:20px;height:20px;border:2px solid var(--moss);border-radius:3px;
+    background:transparent;cursor:pointer;position:relative;flex:none;transition:.15s
+  }
+  .box:checked{background:var(--amber);border-color:var(--amber)}
+  .box:checked::after{
+    content:"";position:absolute;left:5px;top:1px;width:5px;height:11px;
+    border:solid var(--spruce);border-width:0 2.5px 2.5px 0;transform:rotate(42deg)
+  }
+  .box:focus-visible,input:focus-visible,button:focus-visible,textarea:focus-visible{
+    outline:2px solid var(--amber);outline-offset:2px
+  }
+
+  input.txt,input.who{
+    font-family:inherit;font-size:15px;color:var(--spruce);
+    border:0;border-bottom:1px solid transparent;background:transparent;
+    padding:4px 4px;width:100%;border-radius:0
+  }
+  input.txt:hover,input.who:hover{border-bottom-color:var(--line)}
+  input.txt:focus,input.who:focus{border-bottom-color:var(--amber)}
+  input.who{
+    font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--moss)
+  }
+  input.who::placeholder{color:#A9B7AF}
+
+  .x{
+    border:0;background:transparent;color:#B4C0B8;cursor:pointer;
+    font-size:18px;line-height:1;padding:2px 4px;border-radius:3px
+  }
+  .x:hover{color:var(--brick);background:rgba(174,64,48,.08)}
+
+  .card-foot{padding:6px 14px 12px}
+  .add{
+    font-family:'JetBrains Mono',monospace;font-size:12px;
+    border:1px dashed var(--line);background:transparent;color:var(--moss);
+    padding:6px 10px;border-radius:3px;cursor:pointer
+  }
+  .add:hover{border-color:var(--amber);color:var(--spruce)}
+
+  .add-cat{
+    display:block;width:100%;margin:2px 0 0;padding:12px;
+    font-family:'JetBrains Mono',monospace;font-size:12px;
+    border:1px dashed var(--line);background:transparent;color:var(--moss);
+    border-radius:4px;cursor:pointer
+  }
+  .add-cat:hover{border-color:var(--amber);color:var(--spruce)}
+
+  /* ---- кто я ---- */
+  .whobar{
+    background:var(--paper);border:1px solid var(--line);border-radius:4px;
+    padding:12px 14px;margin:0 0 12px;box-shadow:var(--shadow)
+  }
+  .whobar .lead{
+    font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--moss);margin:0 0 9px
+  }
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{
+    display:inline-flex;align-items:center;gap:7px;
+    font-family:'Golos Text',sans-serif;font-size:14px;color:var(--spruce);
+    background:transparent;border:1px solid var(--line);border-radius:20px;
+    padding:6px 14px;cursor:pointer;transition:.15s
+  }
+  .chip:hover{border-color:var(--moss)}
+  .chip.on{background:var(--spruce);border-color:var(--spruce);color:var(--paper)}
+  .chip .drop{
+    border:0;background:transparent;color:#8FA79B;font-size:16px;line-height:1;
+    padding:0 0 2px;cursor:pointer
+  }
+  .chip .drop:hover{color:#F0A08F}
+  .chip.add{border-style:dashed;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--moss)}
+  .whobar .warn{
+    margin:10px 0 0;font-size:13px;color:var(--brick)
+  }
+  .roll{
+    margin:11px 0 0;padding-top:10px;border-top:1px dashed var(--line);
+    font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--moss);
+    display:flex;flex-wrap:wrap;gap:4px 14px
+  }
+  .roll b{color:var(--spruce);font-weight:500}
+  .roll .full{color:var(--amber)}
+  li.row.locked{opacity:.55}
+
+  /* ---- меню ---- */
+  .meal .card-head{gap:8px;flex-wrap:wrap}
+  input.when{
+    font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--paper);background:var(--moss);
+    border:0;border-radius:3px;padding:5px 8px;width:150px;flex:none
+  }
+  input.dish{
+    font-family:'Unbounded',sans-serif;font-weight:600;font-size:15px;
+    border:0;border-bottom:1px solid transparent;background:transparent;color:var(--spruce);
+    padding:3px 2px;flex:1;min-width:120px
+  }
+  input.dish:hover{border-bottom-color:var(--line)}
+  input.dish:focus{border-bottom-color:var(--amber)}
+  .cook{
+    display:flex;align-items:center;gap:6px;flex:none;
+    font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--moss)
+  }
+  .cook input{
+    font-family:'Golos Text',sans-serif;font-size:14px;color:var(--spruce);
+    border:0;border-bottom:1px solid var(--line);background:transparent;padding:2px 4px;width:120px
+  }
+  .cook input:focus{border-bottom-color:var(--amber)}
+  .meal-body{padding:10px 14px 4px;display:flex;gap:10px;align-items:flex-start}
+  .meal-body .box{margin-top:4px}
+  textarea.products{
+    flex:1;font-family:'Golos Text',sans-serif;font-size:14px;color:var(--spruce);
+    background:rgba(74,107,92,.07);border:1px solid var(--line);border-left:3px solid var(--amber);
+    border-radius:3px;padding:8px 10px;resize:vertical;min-height:54px
+  }
+  textarea.products::placeholder{color:#9AAAA1}
+  .meal.bought textarea.products{opacity:.6}
+
+  /* ---- деньги ---- */
+  .money-head{
+    display:grid;grid-template-columns:1fr 110px 62px 26px;gap:8px;
+    padding:11px 14px 8px;border-bottom:1px dashed var(--line);
+    font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--moss);
+    text-transform:uppercase;letter-spacing:.06em
+  }
+  .payer{display:grid;grid-template-columns:1fr 110px 62px 26px;gap:8px;align-items:center;padding:4px 14px}
+  .payer:hover{background:rgba(74,107,92,.05)}
+  .payer input{
+    font-family:inherit;font-size:15px;color:var(--spruce);border:0;
+    border-bottom:1px solid transparent;background:transparent;padding:5px 4px;width:100%
+  }
+  .payer input:hover{border-bottom-color:var(--line)}
+  .payer input:focus{border-bottom-color:var(--amber)}
+  .payer input.sum,.payer input.share{font-family:'JetBrains Mono',monospace;text-align:right}
+  .payer input.sum{font-size:15px}
+  .payer input.share{font-size:13px;color:var(--moss)}
+
+  .settle{
+    margin:12px 0 0;background:var(--spruce);color:var(--paper);
+    border-radius:4px;padding:18px
+  }
+  .settle .sum-line{
+    font-family:'Unbounded',sans-serif;font-size:15px;line-height:1.5;margin-bottom:14px
+  }
+  .settle .sum-line b{color:var(--amber);font-weight:600}
+  .settle ul{padding:0;margin:0;list-style:none}
+  .settle li{
+    display:flex;align-items:baseline;gap:8px;padding:9px 0;
+    border-top:1px solid rgba(255,255,255,.15);font-size:15px;flex-wrap:wrap
+  }
+  .settle li .arrow{color:var(--amber);font-family:'JetBrains Mono',monospace}
+  .settle li .amt{
+    margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--amber)
+  }
+  .settle .ok{font-family:'JetBrains Mono',monospace;font-size:13px;color:#8FA79B}
+
+  /* ---- журнал комментариев ---- */
+  .log{
+    margin-top:44px;background:var(--spruce);color:var(--paper);
+    border-radius:4px;padding:20px 18px 22px
+  }
+  .log h2{
+    font-family:'Unbounded',sans-serif;font-weight:600;text-transform:uppercase;
+    font-size:16px;margin:0 0 4px
+  }
+  .log p.hint{font-size:13px;color:#A9BDB2;margin:0 0 16px}
+  .log input,.log textarea{
+    width:100%;font-family:inherit;font-size:15px;color:var(--paper);
+    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);
+    border-radius:3px;padding:9px 10px;margin-bottom:8px;resize:vertical
+  }
+  .log input::placeholder,.log textarea::placeholder{color:#8FA79B}
+  .log button.post{
+    font-family:'Unbounded',sans-serif;font-weight:600;font-size:13px;
+    background:var(--amber);color:var(--spruce);border:0;border-radius:3px;
+    padding:10px 18px;cursor:pointer
+  }
+  .log button.post:hover{filter:brightness(1.08)}
+  .notes{margin:20px 0 0;padding:0;list-style:none}
+  .note{
+    border-top:1px solid rgba(255,255,255,.15);padding:12px 0;
+    display:grid;grid-template-columns:1fr 24px;gap:8px
+  }
+  .note .meta{
+    font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--amber);
+    margin-bottom:4px;letter-spacing:.03em
+  }
+  .note .meta em{color:#8FA79B;font-style:normal}
+  .note .body{white-space:pre-wrap;font-size:15px}
+  .note .x{color:#7E9488}
+  .note .x:hover{color:#F0A08F;background:rgba(255,255,255,.08)}
+  .empty{color:#8FA79B;font-size:14px;font-family:'JetBrains Mono',monospace}
+
+  /* ---- нижняя панель ---- */
+  .tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:26px}
+  .tools button{
+    font-family:'JetBrains Mono',monospace;font-size:12px;
+    background:transparent;border:1px solid var(--moss);color:var(--spruce);
+    padding:9px 14px;border-radius:3px;cursor:pointer
+  }
+  .tools button:hover{background:var(--spruce);color:var(--paper)}
+  .tools button.danger{border-color:var(--brick);color:var(--brick)}
+  .tools button.danger:hover{background:var(--brick);color:var(--paper)}
+
+  @media (max-width:620px){
+    li.row{
+      grid-template-columns:26px 1fr 24px 24px;
+      grid-template-areas:"b t n x" ". w w w" ". note note note";
+      row-gap:2px
+    }
+    .card-head .meter{display:none}
+    input.when{width:100%}
+    .cook input{width:100%}
+    .cook{flex:1}
+    .money-head{grid-template-columns:1fr 92px 46px 24px;font-size:10px}
+    .payer{grid-template-columns:1fr 92px 46px 24px}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+  @media print{
+    body{background:#fff}
+    .status,.tools,.add,.add-cat,.x,.note-btn,.log input,.log textarea,.log button{display:none!important}
+    li.row .note-wrap{display:none!important}
+    li.row.filled .note-wrap{display:block!important}
+    textarea.note{border:0;border-left:2px solid #000;background:#fff;min-height:0;height:auto}
+    .card{box-shadow:none;break-inside:avoid}
+    header.top{background:#fff;color:#000;border-bottom:2px solid #000}
+    .facts{color:#333}.eyebrow{color:#000}
+    .log,.settle{background:#fff;color:#000;border:1px solid #000}
+    .settle .sum-line b,.settle li .amt,.settle li .arrow{color:#000}
+    input.when{background:#000;color:#fff}
+    textarea.products{background:#fff;border:0;border-left:2px solid #000;min-height:0;height:auto}
+    .note .meta{color:#000}.log p.hint{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <p class="eyebrow">Чек-лист сборов</p>
+    <h1>Палатки<br>на две ночи</h1>
+    <div class="facts">
+      <span>Людей: <b id="f-people">10</b></span>
+      <span>Ночей: <b>2</b> · Дней: <b>3</b></span>
+      <span>Вода: <b>90–120 л</b></span>
+      <span>Мясо: <b>~6 кг</b></span>
+    </div>
+  </header>
+
+  <div class="status">
+    <div class="n" id="total">Собрано 0 <span>из 0</span></div>
+    <div class="meter" id="total-meter"></div>
+    <div class="saveflag" id="flag">загружаю…</div>
+  </div>
+
+  <div class="section-head">
+    <h2>На всех</h2>
+    <div class="sub">в скобках — кто везёт</div>
+  </div>
+  <div id="shared"></div>
+  <button class="add-cat" data-kind="shared">+ новая категория в «На всех»</button>
+
+  <div class="section-head">
+    <h2>Каждому лично</h2>
+    <div class="sub">у каждого свои галочки</div>
+  </div>
+  <div class="whobar" id="whobar"></div>
+  <div id="personal"></div>
+  <button class="add-cat" data-kind="personal">+ новая категория в «Каждому лично»</button>
+
+  <div class="section-head">
+    <h2>Меню</h2>
+    <div class="sub">кто готовит и что везёт</div>
+  </div>
+  <div id="menu"></div>
+  <button class="add-cat" id="add-meal">+ ещё приём пищи</button>
+
+  <div class="section-head">
+    <h2>Деньги</h2>
+    <div class="sub">кто сколько вложил</div>
+  </div>
+  <div class="card">
+    <div class="money-head">
+      <span>Кто платил</span><span>Сумма, ₽</span><span title="1 — полная доля, 0.5 — половина, 0 — не участвует в делёжке">Доли</span><span></span>
+    </div>
+    <div id="money"></div>
+    <div class="card-foot"><button class="add" id="add-payer">+ участник</button></div>
+  </div>
+  <div class="settle" id="settle"></div>
+
+  <section class="log">
+    <h2>Заметки и вопросы</h2>
+    <p class="hint">Пишите здесь: чего не хватает, кто что уже купил, во сколько выезд. Видно всем, у кого есть эта страница.</p>
+    <input id="c-name" placeholder="Имя" maxlength="40">
+    <textarea id="c-text" rows="3" placeholder="Например: у меня есть второй тент, брать?"></textarea>
+    <button class="post" id="c-post">Добавить заметку</button>
+    <ul class="notes" id="notes"></ul>
+  </section>
+
+  <div class="tools">
+    <button id="copy">Скопировать списком</button>
+    <button id="print">Распечатать</button>
+    <button id="uncheck">Снять все галочки</button>
+    <button class="danger" id="reset">Вернуть исходный список</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  /* ▼▼▼ ВСТАВЬТЕ СЮДА АДРЕС ВЕБ-ПРИЛОЖЕНИЯ APPS SCRIPT (кончается на /exec) ▼▼▼ */
+  const API='https://script.google.com/macros/s/AKfycbx4sqQ9VKVQXnaFsuLPVm9wJVyyg84Noq3XI8jClTn32OKPVLQcr5VsqA7YSG3ygCyCmA/exec';
+  /* ▲▲▲ ─────────────────────────────────────────────────────────────── ▲▲▲ */
+  const MEKEY='pohod-me-v1';
+  const POLL_MS=12000;
+  const uid=()=>Math.random().toString(36).slice(2,9);
+  const flag=document.getElementById('flag');
+
+  /* ---------- исходный список ---------- */
+  function seed(){
+    const C=(title,kind,items)=>({id:uid(),title,kind,items:items.map(x=>({
+      id:uid(),text:Array.isArray(x)?x[0]:x,who:Array.isArray(x)?x[1]:'',note:'',done:false
+    }))});
+    const M=(when,dish,cook,products)=>({id:uid(),when,dish,cook,products,bought:false});
+    return {
+    people:[{id:uid(),name:'Вася'},{id:uid(),name:'Света'}],
+    marks:{},
+    menu:[
+      M('День 1 · в дороге','Перекус по пути','','Бутерброды, термос с чаем, вода, что-то погрызть'),
+      M('День 1 · ужин','Шашлык','Вася','Свинина 4 кг, лук 1 кг, маринад/минералка, уголь, овощи на гриль, лаваш, соусы, зелень'),
+      M('Ночь 1 · у костра','Чай, зефир','','Чай, кофе, сахар, зефир, печенье, сгущёнка'),
+      M('День 2 · завтрак','Каша с тушёнкой или яичница','Света','Крупа/овсянка, тушёнка 3 б., яйца 20 шт, колбаса, сыр, хлеб, масло'),
+      M('День 2 · обед','Суп на костре или бутерброды','','Картошка, морковь, лук, тушёнка, лапша, специи, лавровый лист'),
+      M('День 2 · ужин','Курица на решётке / гречка с сосисками','','Курица 4 кг или сосиски 3 кг, гречка 1.5 кг, овощи, хлеб, соусы, второй мешок угля'),
+      M('Ночь 2 · у костра','Остатки и чай','','Чай, печенье, то, что не съели'),
+      M('День 3 · завтрак','Бутерброды и кофе перед выездом','','Хлеб, сыр, колбаса, кофе, доедаем остатки')
+    ],
+    money:[
+      {id:uid(),name:'',sum:'',share:'1',note:''},
+      {id:uid(),name:'',sum:'',share:'1',note:''}
+    ],
+    cats:[
+      C('Лагерь и ночлег','shared',[
+        ['Палатки (посчитать места на 10 человек)','Вася'],
+        'Тент / шатёр от дождя и солнца',
+        'Колышки запасные + киянка или молоток',
+        'Верёвки, стропы, скотч',
+        'Складной стол',
+        'Стулья складные (по числу людей)',
+        'Кемпинговый фонарь на лагерь + гирлянда',
+        'Пауэрбанки / зарядная станция',
+        'Мусорные мешки 60–120 л (плотные)'
+      ]),
+      C('Кухня и вода','shared',[
+        ['Питьевая вода 90–120 л (канистры)','Вася'],
+        'Вода техническая — мытьё, душ',
+        'Газовая горелка / плитка + баллоны',
+        'Котелок, казан, тренога',
+        'Мангал, решётка, шампуры',
+        'Уголь на два вечера + жидкость для розжига',
+        'Спички и зажигалки в герметичном пакете',
+        'Нож, разделочная доска, консервный нож, штопор',
+        'Половник, лопатка, щипцы',
+        'Тарелки, кружки, приборы (запас на всех)',
+        'Таз, губка, биоразлагаемое средство для мытья',
+        'Фольга, плёнка, пакеты zip',
+        'Сумка-холодильник + аккумуляторы холода',
+        'Соль, сахар, специи, масло, чай, кофе'
+      ]),
+      C('Еда на 2 дня','shared',[
+        'Мясо на шашлык ~4 кг + маринад',
+        'Овощи, зелень, лимон',
+        'Хлеб, лаваш',
+        'Каша или макароны на завтрак, тушёнка',
+        'Яйца, сыр, колбаса на бутерброды',
+        'Перекусы: орехи, батончики, чипсы, печенье',
+        'Сладкое к чаю, зефир для костра',
+        'Напитки'
+      ]),
+      C('Душ, туалет, гигиена','shared',[
+        ['Туристический душ (мешок + шланг)','Вася и Света'],
+        'Палатка-кабинка под душ и туалет',
+        'Складной туалет + пакеты / наполнитель',
+        'Канистра с водой под душ, ковшик',
+        'Туалетная бумага (с запасом)',
+        'Влажные салфетки, антисептик',
+        'Мыло, коврик под ноги'
+      ]),
+      C('Огонь и инструмент','shared',[
+        'Топор и/или пила',
+        'Дрова или растопка',
+        'Лопатка сапёрная',
+        'Перчатки рабочие',
+        'Ведро с водой или огнетушитель рядом с костром',
+        'Ремнабор: изолента, стяжки, мультитул'
+      ]),
+      C('Аптечка и безопасность','shared',[
+        'Общая аптечка: обезболивающее, жаропонижающее, от живота, антигистаминное',
+        'Пластыри, бинт, перекись, хлоргексидин, зелёнка',
+        'Спрей от клещей на одежду + от комаров',
+        'Спирали, фумигатор, антимоскитная сетка',
+        'Средство после укусов и от ожогов',
+        'Клещедёр',
+        'Заряженный телефон с офлайн-картой района'
+      ]),
+      C('Вечер и отдых','shared',[
+        'Колонка + зарядка',
+        'Настолки, карты',
+        'Мяч, бадминтон, фрисби',
+        'Гитара',
+        'Пледы, каремат-сидушки, гамак'
+      ]),
+      C('Спальное место','personal',[
+        'Спальник по погоде (ночью холоднее, чем кажется)',
+        'Каремат или самонадувной коврик',
+        'Подушка или что-то под голову',
+        'Тёплые носки и шапка для сна'
+      ]),
+      C('Одежда и обувь','personal',[
+        'Куртка / тёплая кофта на вечер',
+        'Дождевик или непромокаемая куртка',
+        'Сменная футболка, бельё, носки (3 пары — две ночи)',
+        'Штаны длинные — от клещей и комаров',
+        'Кепка или панама',
+        'Закрытая удобная обувь + сланцы',
+        'Купальник / плавки',
+        'Пакет под грязное и мокрое'
+      ]),
+      C('Личные вещи','personal',[
+        'КЛМН: кружка, ложка, миска, нож',
+        'Налобный фонарик + батарейки',
+        'Повербанк и кабель',
+        'Полотенце',
+        'Зубная щётка, паста, средства гигиены',
+        'Личные лекарства',
+        'Солнцезащитный крем, очки',
+        'Свой репеллент',
+        'Документы, наличные, карта',
+        'Влажные салфетки'
+      ])
+    ]};
+  }
+
+  let state=seed(), notes=[], me=null, memoryOnly=false;
+
+  /* ---------- хранилище: Google Sheets через Apps Script ---------- */
+  let rev=0, t1=null, pushing=false, again=false, pending=false;
+
+  const doc=()=>({cats:state.cats,menu:state.menu,money:state.money,people:state.people,marks:state.marks,notes:notes});
+
+  async function push(){
+    if(memoryOnly){flag.textContent='нет связи — правки только в этой вкладке';flag.classList.add('err');return;}
+    if(pushing){again=true;return;}
+    pushing=true;flag.textContent='сохраняю…';flag.classList.remove('err');
+    try{
+      const r=await fetch(API,{
+        method:'POST',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({action:'save',doc:doc()})
+      });
+      const d=await r.json();
+      if(d && d.rev){rev=d.rev;flag.textContent='сохранено';flag.classList.remove('err');}
+      else throw new Error(d && d.error||'ошибка ответа');
+    }catch(e){
+      flag.textContent='не сохранилось — проверьте связь';flag.classList.add('err');
+    }
+    pushing=false;pending=false;
+    if(again){again=false;push();}
+  }
+
+  function save(){pending=true;clearTimeout(t1);t1=setTimeout(push,700);}
+  function saveNotes(){push();}
+
+  function normalize(){
+    const s0=seed();
+    if(!Array.isArray(state.cats))state.cats=s0.cats;
+    if(!Array.isArray(state.menu))state.menu=s0.menu;
+    if(!Array.isArray(state.money))state.money=s0.money;
+    if(!Array.isArray(state.people))state.people=s0.people;
+    if(!state.marks||typeof state.marks!=='object')state.marks={};
+    if(!Array.isArray(notes))notes=[];
+    if(me&&!state.people.some(p=>p.id===me))me=null;
+  }
+
+  function apply(d){
+    if(!d)return;
+    state={cats:d.cats,menu:d.menu,money:d.money,people:d.people,marks:d.marks};
+    notes=d.notes||[];
+  }
+
+  async function load(){
+    if(API.indexOf('/macros/s/')<0){
+      memoryOnly=true;flag.textContent='адрес Apps Script не вписан';flag.classList.add('err');
+      try{me=localStorage.getItem(MEKEY)||null;}catch(e){}
+      normalize();renderAll();renderNotes();return;
+    }
+    try{me=localStorage.getItem(MEKEY)||null;}catch(e){}
+    try{
+      const r=await fetch(API+'?action=load',{method:'GET'});
+      const d=await r.json();
+      rev=d.rev||0;
+      if(d.doc&&d.doc.cats)apply(d.doc);
+      flag.textContent='готово';flag.classList.remove('err');
+    }catch(e){
+      memoryOnly=true;flag.textContent='нет связи с таблицей';flag.classList.add('err');
+    }
+    normalize();renderAll();renderNotes();
+    if(!memoryOnly)setInterval(poll,POLL_MS);
+  }
+
+  /* тихо подтягиваем чужие правки, пока никто ничего не набирает */
+  function busy(){
+    const a=document.activeElement;
+    return pushing||pending||(a&&/^(INPUT|TEXTAREA)$/.test(a.tagName));
+  }
+  async function poll(){
+    if(busy()||document.hidden)return;
+    try{
+      const r=await fetch(API+'?action=rev');
+      const d=await r.json();
+      if(!d.rev||d.rev===rev)return;
+      const r2=await fetch(API+'?action=load');
+      const d2=await r2.json();
+      if(d2.doc&&d2.doc.cats&&!busy()){
+        rev=d2.rev;apply(d2.doc);normalize();renderAll();renderNotes();
+        flag.textContent='обновлено';flag.classList.remove('err');
+      }
+    }catch(e){}
+  }
+
+  /* ---------- индикаторы ---------- */
+  function meter(el,total,done){
+    if(el.childElementCount!==total){el.innerHTML='';for(let i=0;i<total;i++)el.appendChild(document.createElement('i'));}
+    [...el.children].forEach((d,i)=>d.classList.toggle('on',i<done));
+  }
+  function totals(){
+    let all=0,done=0;
+    state.cats.forEach(c=>c.items.forEach(i=>{all++;if(isDone(c,i))done++;}));
+    document.getElementById('total').innerHTML='Собрано '+done+' <span>из '+all+'</span>';
+    meter(document.getElementById('total-meter'),all,done);
+  }
+
+  /* ---------- отрисовка ---------- */
+  function renderAll(){
+    ['shared','personal'].forEach(kind=>{
+      const host=document.getElementById(kind);
+      host.innerHTML='';
+      state.cats.filter(c=>c.kind===kind).forEach(cat=>host.appendChild(cardEl(cat)));
+    });
+    renderWho();renderMenu();renderMoney();
+    totals();
+  }
+
+  function cardEl(cat){
+    const card=document.createElement('div');card.className='card';
+
+    const head=document.createElement('div');head.className='card-head';
+    const title=document.createElement('input');
+    title.className='title';title.value=cat.title;title.size=Math.max(cat.title.length,8);
+    title.setAttribute('aria-label','Название категории');
+    title.oninput=()=>{cat.title=title.value;title.size=Math.max(title.value.length,8);save();};
+    const m=document.createElement('div');m.className='meter';
+    const cnt=document.createElement('div');cnt.className='count';
+    const del=document.createElement('button');del.className='x';del.textContent='×';
+    del.title='Удалить категорию';
+    del.onclick=()=>{if(confirm('Удалить категорию «'+cat.title+'» целиком?')){
+      state.cats=state.cats.filter(c=>c.id!==cat.id);renderAll();save();}};
+    head.append(title,m,cnt,del);
+
+    const ul=document.createElement('ul');
+    const refresh=()=>{const d=cat.items.filter(i=>isDone(cat,i)).length;meter(m,cat.items.length,d);cnt.textContent=d+'/'+cat.items.length;totals();};
+
+    cat.items.forEach(item=>ul.appendChild(rowEl(cat,item,refresh)));
+
+    const foot=document.createElement('div');foot.className='card-foot';
+    const add=document.createElement('button');add.className='add';add.textContent='+ пункт';
+    add.onclick=()=>{
+      const it={id:uid(),text:'',who:'',note:'',done:false};
+      cat.items.push(it);
+      const row=rowEl(cat,it,refresh);ul.appendChild(row);
+      row.querySelector('.txt').focus();refresh();save();
+    };
+    foot.appendChild(add);
+
+    card.append(head,ul,foot);
+    refresh();
+    return card;
+  }
+
+  function rowEl(cat,item,refresh){
+    const locked=cat.kind==='personal'&&!me;
+    const li=document.createElement('li');
+    li.className='row'+(isDone(cat,item)?' done':'')+(locked?' locked':'');
+
+    const cb=document.createElement('input');cb.type='checkbox';cb.className='box';cb.checked=isDone(cat,item);
+    cb.setAttribute('aria-label','Взяли');cb.disabled=locked;
+    if(locked)cb.title='Сначала выберите себя выше';
+    cb.onchange=()=>{setDone(cat,item,cb.checked);li.classList.toggle('done',cb.checked);refresh();save();};
+
+    const txt=document.createElement('input');txt.className='txt';txt.value=item.text;
+    txt.placeholder='что берём';
+    txt.oninput=()=>{item.text=txt.value;save();};
+
+    const who=document.createElement('input');who.className='who';who.value=item.who||'';
+    who.placeholder=cat.kind==='shared'?'кто берёт':'пометка';
+    who.oninput=()=>{item.who=who.value;save();};
+
+    const nbtn=document.createElement('button');nbtn.className='note-btn';nbtn.title='Заметка к пункту';
+    nbtn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+
+    const wrap=document.createElement('div');wrap.className='note-wrap';
+    const note=document.createElement('textarea');note.className='note';note.rows=2;
+    note.placeholder='Заметка: вопрос, размер, где купить, сколько нужно…';
+    note.value=item.note||'';
+    const grow=()=>{note.style.height='auto';note.style.height=Math.max(note.scrollHeight,52)+'px';};
+    const mark=()=>{
+      const has=!!(item.note||'').trim();
+      nbtn.classList.toggle('has',has);
+      li.classList.toggle('filled',has);
+      if(has)li.classList.add('open');
+    };
+    note.oninput=()=>{item.note=note.value;mark();grow();save();};
+    wrap.appendChild(note);
+
+    nbtn.onclick=()=>{
+      li.classList.toggle('open');
+      if(li.classList.contains('open')){note.focus();grow();}
+    };
+
+    const x=document.createElement('button');x.className='x';x.textContent='×';x.title='Удалить пункт';
+    x.onclick=()=>{cat.items=cat.items.filter(i=>i.id!==item.id);li.remove();refresh();save();};
+
+    li.append(cb,txt,who,nbtn,x,wrap);
+    mark();
+    if(item.note)setTimeout(grow,0);
+    return li;
+  }
+
+  /* ---------- кто я ---------- */
+  function isDone(cat,item){
+    if(cat.kind!=='personal')return !!item.done;
+    return !!(me&&state.marks[me]&&state.marks[me][item.id]);
+  }
+  function setDone(cat,item,v){
+    if(cat.kind!=='personal'){item.done=v;return;}
+    if(!me)return;
+    if(!state.marks[me])state.marks[me]={};
+    if(v)state.marks[me][item.id]=true;else delete state.marks[me][item.id];
+  }
+  function saveMe(){
+    try{me?localStorage.setItem(MEKEY,me):localStorage.removeItem(MEKEY);}catch(e){}
+  }
+  /* добавляем себя аккуратно: сначала забираем свежий список, потом дописываем —
+     иначе два человека, вписавшихся одновременно, затрут друг друга */
+  async function addPerson(name){
+    if(!memoryOnly){
+      flag.textContent='добавляю…';
+      try{
+        const r=await fetch(API+'?action=load');
+        const d=await r.json();
+        if(d&&d.doc&&d.doc.cats){rev=d.rev;apply(d.doc);normalize();}
+      }catch(e){}
+    }
+    const same=state.people.find(p=>p.name.toLowerCase()===name.toLowerCase());
+    if(same){
+      me=same.id;saveMe();renderAll();
+      flag.textContent='вы уже в списке';flag.classList.remove('err');
+      return;
+    }
+    const p={id:uid(),name:name};
+    state.people.push(p);me=p.id;saveMe();renderAll();push();
+  }
+
+  function personalItems(){
+    return state.cats.filter(c=>c.kind==='personal').flatMap(c=>c.items);
+  }
+  function renderWho(){
+    const bar=document.getElementById('whobar');bar.innerHTML='';
+    const lead=document.createElement('p');lead.className='lead';lead.textContent='Я — это:';
+    const chips=document.createElement('div');chips.className='chips';
+
+    state.people.forEach(p=>{
+      const c=document.createElement('button');c.className='chip'+(me===p.id?' on':'');
+      const n=document.createElement('span');n.textContent=p.name;
+      c.appendChild(n);
+      c.onclick=e=>{if(e.target.classList.contains('drop'))return;me=(me===p.id?null:p.id);saveMe();renderAll();};
+      c.ondblclick=()=>{
+        const v=prompt('Имя участника:',p.name);
+        if(v!==null&&v.trim()){p.name=v.trim();renderAll();save();}
+      };
+      if(me===p.id){
+        const d=document.createElement('button');d.className='drop';d.textContent='×';d.title='Убрать участника';
+        d.onclick=()=>{
+          if(!confirm('Убрать «'+p.name+'» и его галочки?'))return;
+          state.people=state.people.filter(o=>o.id!==p.id);delete state.marks[p.id];
+          me=null;saveMe();renderAll();save();
+        };
+        c.appendChild(d);
+      }
+      chips.appendChild(c);
+    });
+
+    const add=document.createElement('button');add.className='chip add';add.textContent='+ имя';
+    add.onclick=async()=>{
+      const v=prompt('Как вас записать?');
+      if(v&&v.trim())await addPerson(v.trim());
+    };
+    chips.appendChild(add);
+    bar.append(lead,chips);
+
+    if(!me){
+      const w=document.createElement('p');w.className='warn';
+      w.textContent='Выберите себя — иначе личные галочки не поставить. Выбор запомнится на этом устройстве.';
+      bar.appendChild(w);
+    }
+
+    const items=personalItems();
+    if(items.length&&state.people.length){
+      const roll=document.createElement('div');roll.className='roll';
+      state.people.forEach(p=>{
+        const m=state.marks[p.id]||{};
+        const n=items.filter(i=>m[i.id]).length;
+        const s=document.createElement('span');
+        s.innerHTML='<b>'+esc(p.name)+'</b> '+n+'/'+items.length;
+        if(n===items.length)s.className='full';
+        roll.appendChild(s);
+      });
+      bar.appendChild(roll);
+    }
+  }
+
+  /* ---------- меню ---------- */
+  function renderMenu(){
+    const host=document.getElementById('menu');host.innerHTML='';
+    state.menu.forEach(m=>host.appendChild(mealEl(m)));
+  }
+
+  function mealEl(m){
+    const card=document.createElement('div');card.className='card meal'+(m.bought?' bought':'');
+
+    const head=document.createElement('div');head.className='card-head';
+    const when=document.createElement('input');when.className='when';when.value=m.when;
+    when.placeholder='когда';when.setAttribute('aria-label','Когда');
+    when.oninput=()=>{m.when=when.value;save();};
+    const dish=document.createElement('input');dish.className='dish';dish.value=m.dish;
+    dish.placeholder='что едим';dish.setAttribute('aria-label','Блюдо');
+    dish.oninput=()=>{m.dish=dish.value;save();};
+    const cook=document.createElement('div');cook.className='cook';
+    const cl=document.createElement('span');cl.textContent='готовит';
+    const ci=document.createElement('input');ci.value=m.cook||'';ci.placeholder='имя';
+    ci.setAttribute('aria-label','Кто готовит');
+    ci.oninput=()=>{m.cook=ci.value;save();};
+    cook.append(cl,ci);
+    const del=document.createElement('button');del.className='x';del.textContent='×';del.title='Убрать приём пищи';
+    del.onclick=()=>{if(confirm('Убрать «'+(m.dish||m.when)+'» из меню?')){
+      state.menu=state.menu.filter(o=>o.id!==m.id);renderMenu();save();}};
+    head.append(when,dish,cook,del);
+
+    const body=document.createElement('div');body.className='meal-body';
+    const cb=document.createElement('input');cb.type='checkbox';cb.className='box';cb.checked=!!m.bought;
+    cb.title='Продукты куплены';cb.setAttribute('aria-label','Продукты куплены');
+    cb.onchange=()=>{m.bought=cb.checked;card.classList.toggle('bought',cb.checked);save();};
+    const pr=document.createElement('textarea');pr.className='products';pr.rows=2;
+    pr.placeholder='Продукты и количество: что купить, сколько, кто везёт';
+    pr.value=m.products||'';pr.setAttribute('aria-label','Продукты');
+    const grow=()=>{pr.style.height='auto';pr.style.height=Math.max(pr.scrollHeight,54)+'px';};
+    pr.oninput=()=>{m.products=pr.value;grow();save();};
+    body.append(cb,pr);
+    setTimeout(grow,0);
+
+    card.append(head,body);
+    const foot=document.createElement('div');foot.className='card-foot';card.appendChild(foot);
+    return card;
+  }
+
+  document.getElementById('add-meal').onclick=()=>{
+    state.menu.push({id:uid(),when:'День 2 · ',dish:'',cook:'',products:'',bought:false});
+    renderMenu();save();
+    document.getElementById('menu').lastChild.querySelector('.dish').focus();
+  };
+
+  /* ---------- деньги ---------- */
+  const rub=n=>Math.round(n).toLocaleString('ru-RU')+' ₽';
+  const num=v=>{const x=parseFloat(String(v).replace(/\s/g,'').replace(',','.'));return isFinite(x)?x:0;};
+
+  function renderMoney(){
+    const host=document.getElementById('money');host.innerHTML='';
+    state.money.forEach(p=>host.appendChild(payerEl(p)));
+    settle();
+  }
+
+  function payerEl(p){
+    const row=document.createElement('div');row.className='payer';
+    const name=document.createElement('input');name.value=p.name||'';name.placeholder='имя';
+    name.setAttribute('aria-label','Имя');
+    name.oninput=()=>{p.name=name.value;settle();save();};
+    const sum=document.createElement('input');sum.className='sum';sum.value=p.sum||'';
+    sum.placeholder='0';sum.inputMode='decimal';sum.setAttribute('aria-label','Сколько потратил');
+    sum.oninput=()=>{p.sum=sum.value;settle();save();};
+    const sh=document.createElement('input');sh.className='share';sh.value=p.share==null?'1':p.share;
+    sh.placeholder='1';sh.inputMode='decimal';sh.setAttribute('aria-label','Доли');
+    sh.oninput=()=>{p.share=sh.value;settle();save();};
+    const x=document.createElement('button');x.className='x';x.textContent='×';x.title='Убрать участника';
+    x.onclick=()=>{state.money=state.money.filter(o=>o.id!==p.id);renderMoney();save();};
+    row.append(name,sum,sh,x);
+    return row;
+  }
+
+  document.getElementById('add-payer').onclick=()=>{
+    state.money.push({id:uid(),name:'',sum:'',share:'1',note:''});
+    renderMoney();save();
+    document.getElementById('money').lastChild.querySelector('input').focus();
+  };
+
+  function settle(){
+    const box=document.getElementById('settle');
+    const people=state.money
+      .map((p,i)=>({name:(p.name||'').trim()||'Участник '+(i+1),paid:num(p.sum),share:p.share==null?1:num(p.share)}))
+      .filter(p=>p.paid>0||p.share>0);
+    const total=people.reduce((s,p)=>s+p.paid,0);
+    const shares=people.reduce((s,p)=>s+p.share,0);
+
+    if(!people.length||total<=0||shares<=0){
+      box.innerHTML='<div class="ok">Впишите, кто сколько потратил — посчитаю, кто кому должен.</div>';
+      return;
+    }
+    const per=total/shares;
+    const bal=people.map(p=>({name:p.name,d:p.paid-per*p.share}));
+    const debt=bal.filter(b=>b.d<-0.5).map(b=>({name:b.name,v:-b.d})).sort((a,b)=>b.v-a.v);
+    const cred=bal.filter(b=>b.d>0.5).map(b=>({name:b.name,v:b.d})).sort((a,b)=>b.v-a.v);
+
+    const moves=[];let i=0,j=0;
+    while(i<debt.length&&j<cred.length){
+      const v=Math.min(debt[i].v,cred[j].v);
+      if(v>0.5)moves.push({from:debt[i].name,to:cred[j].name,v});
+      debt[i].v-=v;cred[j].v-=v;
+      if(debt[i].v<=0.5)i++;
+      if(cred[j].v<=0.5)j++;
+    }
+
+    let html='<div class="sum-line">Потрачено <b>'+rub(total)+'</b><br>На одну долю: <b>'+rub(per)+'</b>'
+      +(shares!==people.length?' <span style="opacity:.7">· долей '+(+shares.toFixed(2))+'</span>':'')+'</div>';
+    if(!moves.length){
+      html+='<div class="ok">Всё поровну, никто никому не должен.</div>';
+    }else{
+      html+='<ul>'+moves.map(m=>
+        '<li><span>'+esc(m.from)+'</span><span class="arrow">→</span><span>'+esc(m.to)+'</span><span class="amt">'+rub(m.v)+'</span></li>'
+      ).join('')+'</ul>';
+    }
+    box.innerHTML=html;
+  }
+  const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+  /* ---------- заметки ---------- */
+  function renderNotes(){
+    const host=document.getElementById('notes');host.innerHTML='';
+    if(!notes.length){
+      const li=document.createElement('li');li.className='empty';
+      li.textContent='Пока пусто. Первая заметка — ваша.';
+      host.appendChild(li);return;
+    }
+    notes.slice().reverse().forEach(n=>{
+      const li=document.createElement('li');li.className='note';
+      const main=document.createElement('div');
+      const meta=document.createElement('div');meta.className='meta';
+      meta.innerHTML=(n.name||'Аноним')+' <em>· '+new Date(n.ts).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+'</em>';
+      const body=document.createElement('div');body.className='body';body.textContent=n.text;
+      main.append(meta,body);
+      const x=document.createElement('button');x.className='x';x.textContent='×';x.title='Удалить заметку';
+      x.onclick=()=>{if(confirm('Удалить заметку?')){notes=notes.filter(o=>o.id!==n.id);renderNotes();saveNotes();}};
+      li.append(main,x);host.appendChild(li);
+    });
+  }
+
+  document.getElementById('c-post').onclick=()=>{
+    const name=document.getElementById('c-name'),text=document.getElementById('c-text');
+    if(!text.value.trim()){text.focus();return;}
+    notes.push({id:uid(),name:name.value.trim(),text:text.value.trim(),ts:Date.now()});
+    text.value='';renderNotes();saveNotes();
+  };
+
+  /* ---------- кнопки ---------- */
+  document.querySelectorAll('.add-cat').forEach(b=>b.onclick=()=>{
+    state.cats.push({id:uid(),title:'Новая категория',kind:b.dataset.kind,items:[{id:uid(),text:'',who:'',note:'',done:false}]});
+    renderAll();save();
+    const host=document.getElementById(b.dataset.kind);
+    host.lastChild.querySelector('.title').select();
+  });
+
+  document.getElementById('uncheck').onclick=()=>{
+    if(!confirm('Снять галочки в «На всех», в меню и свои личные? Списки останутся.'))return;
+    state.cats.forEach(c=>c.items.forEach(i=>{if(c.kind!=='personal')i.done=false;}));
+    if(me)state.marks[me]={};
+    state.menu.forEach(m=>m.bought=false);
+    renderAll();save();
+  };
+
+  document.getElementById('reset').onclick=()=>{
+    if(!confirm('Вернуть исходный список вещей и меню? Ваши правки в них пропадут. Деньги и заметки останутся.'))return;
+    const s0=seed();state.cats=s0.cats;state.menu=s0.menu;renderAll();save();
+  };
+
+  document.getElementById('print').onclick=()=>window.print();
+
+  document.getElementById('copy').onclick=async()=>{
+    const part=k=>state.cats.filter(c=>c.kind===k).map(c=>
+      c.title.toUpperCase()+'\n'+c.items.map(i=>
+        (isDone(c,i)?'[x] ':'[ ] ')+i.text+(i.who?' ('+i.who+')':'')+
+        ((i.note||'').trim()?'\n      → '+i.note.trim().replace(/\n/g,' / '):'')
+      ).join('\n')).join('\n\n');
+    const menu=state.menu.map(m=>
+      (m.bought?'[x] ':'[ ] ')+(m.when||'')+' — '+(m.dish||'')+(m.cook?' · готовит '+m.cook:'')+
+      (m.products?'\n      '+m.products.replace(/\n/g,' / '):'')).join('\n\n');
+    const money=state.money.filter(p=>(p.name||'').trim()||num(p.sum)>0)
+      .map(p=>(p.name||'—')+': '+rub(num(p.sum))+(num(p.share)!==1?' · доли '+p.share:'')).join('\n');
+    const st=document.getElementById('settle').innerText.trim();
+    const meName=(state.people.find(p=>p.id===me)||{}).name;
+    const out='НА ВСЕХ\n\n'+part('shared')+'\n\n\nКАЖДОМУ ЛИЧНО'+(meName?' — отметки: '+meName:'')+'\n\n'+part('personal')
+      +'\n\n\nМЕНЮ\n\n'+menu+(money?'\n\n\nДЕНЬГИ\n\n'+money+'\n\n'+st:'');
+    try{await navigator.clipboard.writeText(out);flag.textContent='скопировано';flag.classList.remove('err');}
+    catch(e){flag.textContent='скопировать не вышло';flag.classList.add('err');}
+  };
+
+  load();
+})();
+</script>
+</body>
+</html>
