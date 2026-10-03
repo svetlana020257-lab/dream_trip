@@ -238,8 +238,8 @@ nav.tabs .dot{position:absolute;top:5px;right:calc(50% - 18px);width:9px;height:
 .scene .stage{width:600px;height:600px;top:42%}
 .scene .shade{position:absolute;inset:0;background:linear-gradient(#0b143055,#0b143022 30%,#0b143088 62%,#0b1430 100%)}
 .scene .cam>img{filter:brightness(.7) saturate(1.1)}
-.scene .hero{position:absolute;left:50%;bottom:22px;transform:translateX(-50%)}
-.counter{position:absolute;left:0;right:0;top:14px;text-align:center;z-index:3}
+.scene .hero{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);background:none;border:0;padding:0;cursor:pointer}
+.counter{position:absolute;left:0;right:0;top:14px;text-align:center;z-index:6}
 .counter .n{font-family:var(--pixel);font-size:44px;color:var(--gold-hi);text-shadow:3px 3px 0 #6b3a10,0 0 18px #ffb85a;line-height:1}
 .counter .n.neg{color:#ffd0cb;text-shadow:3px 3px 0 #5a1010}
 .counter .k{font-family:var(--pixel);font-size:9px;color:var(--gold);margin-top:10px;text-shadow:2px 2px 0 #000;letter-spacing:1px}
@@ -254,7 +254,9 @@ nav.tabs .dot{position:absolute;top:5px;right:calc(50% - 18px);width:9px;height:
 .status.trap{border-color:var(--trap);background:#33130f}
 .status.world{border-color:#5fb4ff;background:#0f1d44}
 .captive .fogc{position:absolute;inset:0;z-index:4;background:radial-gradient(ellipse at 50% 80%,#7b2d9a66,#2a0b33cc 70%);animation:pulse 4s ease-in-out infinite;pointer-events:none}
-.chains{position:absolute;inset:0;z-index:5;pointer-events:none}
+.chains{position:absolute;inset:10% -4% 6%;width:108%;height:84%;z-index:5;pointer-events:none;animation:clink 3s ease-in-out infinite}
+@keyframes clink{0%,100%{transform:translateY(0)}50%{transform:translateY(2px)}}
+.captive .hero{z-index:5}.captive .hero .hsprite{filter:saturate(.45) brightness(.85)}
 .say-line{font-style:italic;color:#e6ecff;margin:12px 0 0;text-align:center}
 
 /* ---------- задания ---------- */
@@ -345,6 +347,36 @@ dialog::backdrop{background:#000b}
 .switch[aria-checked="true"]::after{left:29px;background:var(--gold-hi)}
 .landing{text-align:center;padding-top:30px}
 .landing .big{font-family:var(--pixel);font-size:13px;line-height:1.8;color:var(--gold-hi);margin:20px 0}
+/* ---------- итоги встречи ---------- */
+#recap{position:fixed;inset:0;z-index:85;background:#050817;overflow-y:auto}
+#recap .bg{position:fixed;inset:0;overflow:hidden;opacity:.35}
+.rc-in{position:relative;max-width:460px;margin:0 auto;padding:calc(22px + env(safe-area-inset-top,0px)) 16px calc(26px + env(safe-area-inset-bottom,0px));min-height:100%;display:flex;flex-direction:column}
+.rc-h{font-family:var(--pixel);font-size:14px;line-height:1.8;color:var(--gold-hi);text-align:center;text-shadow:2px 2px 0 #000}
+.rc-h span{font-size:9px;color:var(--muted)}
+.rc-cnt{text-align:center;margin:16px 0 6px}
+.rc-cnt .n{font-family:var(--pixel);font-size:54px;color:var(--gold-hi);text-shadow:3px 3px 0 #6b3a10,0 0 22px #ffb85a;line-height:1}
+.rc-cnt .n.burn{animation:burn 1s ease-out forwards}
+@keyframes burn{0%{color:#fff;text-shadow:0 0 30px #ff7a4d,0 0 60px #ffd34d;transform:scale(1.25)}100%{color:#ffb85a55;text-shadow:none;transform:scale(1)}}
+.rc-cnt .k{font-family:var(--pixel);font-size:9px;color:var(--gold);margin-top:12px;line-height:1.7}
+.rc-road{position:relative;height:150px;margin:6px -16px 4px;overflow:hidden}
+.rc-plates{position:absolute;left:-44px;right:-44px;bottom:6px;height:22px;display:flex;gap:4px;transition:transform .12s steps(2)}
+.rc-plates i{flex:0 0 40px;height:22px;background:linear-gradient(#ffe08a,#b8893a);box-shadow:inset 0 0 0 3px #6b4f17,0 0 14px #ffd27a88}
+.rc-hero{position:absolute;left:50%;bottom:24px;transform:translateX(-50%)}
+.rc-hero.hop{animation:rchop .2s ease-out}
+@keyframes rchop{50%{transform:translate(-50%,-10px)}}
+.rc-hero.cap{filter:saturate(.4) brightness(.8) drop-shadow(0 0 10px #b46bff)}
+.rc-lines{display:flex;flex-direction:column;gap:8px;margin:8px 0 14px}
+.rc-line{display:flex;gap:12px;align-items:flex-start;background:#0d1640ee;border:2px solid #26346f;padding:10px 12px;font-size:17px;animation:stepin .4s ease-out both}
+.rc-line span{font-family:var(--pixel);font-size:12px;color:var(--gold);min-width:16px;padding-top:3px}
+.rc-line.good{border-color:#2f6b45}.rc-line.good span{color:var(--ok)}
+.rc-line.bad{border-color:#6b2a4a;background:#24123aee}.rc-line.bad span{color:#e7b6f2}
+.rc-line.gold{border-color:var(--gold);background:#2c2410ee}
+.rc-line.dark{border-color:#3a1f6e}.rc-line.dark span{color:#b46bff}
+.rc-go{margin-top:auto;opacity:0;pointer-events:none;transition:opacity .5s}
+.rc-go.show{opacity:1;pointer-events:auto}
+.spark{position:fixed;z-index:200;width:6px;height:6px;pointer-events:none;animation:spark2 1.2s ease-out forwards}
+@keyframes spark2{0%{transform:translate(0,0);opacity:1}100%{transform:translate(var(--dx),calc(var(--dy) + 40px));opacity:0}}
+.mvp{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);z-index:4;font-family:var(--pixel);font-size:8px;color:#1d1400;background:var(--gold);padding:5px 8px;box-shadow:0 0 0 2px #6b4f17,0 0 14px #ffd27a;white-space:nowrap}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}.scroll .tx p{opacity:1;transform:none}}
 </style>
 </head>
@@ -580,7 +612,7 @@ function freshState(){
     dark:{pos:1,bonus:0,quiet:0,from:1}, lanterns:3, yaraUsed:false, laws:[],
     heroes:[], triples:{fire:{used:false},water:{used:false},earth:{used:false},air:{used:false}},
     effects:{}, draft:{}, events:[], log:[], lastDark:null, prev:null, updated:0,
-    nextMeeting:'', tasks:[], announce:[], recap:{}};
+    nextMeeting:'', tasks:[], announce:[], recap:{}, recapDark:null, lastMvp:''};
 }
 let S=freshState();
 let CLAIMS={};           // заявки участников: heroId -> {task,refl,min:[7],sphere,trap,personal}
@@ -748,6 +780,7 @@ function moveBy(h,n){
     target=Math.min(target,TOP);
   } else target=Math.max(h.pos+n,floorOf(h));
   h.pos=target;
+  if(h.atCeiling&&h.atCeiling===target&&h.wk) h.wk.ceil=target;
   if(h.atCeiling&&h.atCeiling===target){ ev(`${h.name} у потолка ${target}: пробой и испытание Стража порогов. Лишние ходы переносятся.`,{type:'ceiling',hero:h.id}); return; }
   land(h);
 }
@@ -756,14 +789,14 @@ function land(h){
   if(n===TOP){ ev(`${h.name} на вершине!`); return; }
   if(TRAPS[n]){
     if(S.effects.fireNoTraps&&h.triple==='fire'){ ev(`${h.name} проходит ловушку «${TRAPS[n].name}»: сила Огня`); return; }
-    h.trap={cell:n,to:TRAPS[n].to,left:h.triple==='earth'?2:1};
+    h.trap={cell:n,to:TRAPS[n].to,left:h.triple==='earth'?2:1}; if(h.wk) h.wk.trapNew=true;
     ev(`${h.name} в ловушке «${TRAPS[n].name}» (${n}). Берёт у группы вызов; не выполнит — спустится на ${TRAPS[n].to}.`); return;
   }
   if(BRIDGES[n]){ const b=BRIDGES[n]; ev(`${h.name} на мосту «${b.name}» ${n} → ${b.to}. Условие: ${b.cond}.`,{type:'bridge',hero:h.id,from:n,to:b.to}); return; }
   if(MIRRORS.includes(n)){ ev(`${h.name} на Зеркале (${n}): каждый говорит одну честную фразу.`); return; }
   if(CONFIG.CHEST_CELLS.includes(n)){ ev(`${h.name} на Сундуке (${n}): тянет карту и сразу разыгрывает.`); return; }
   const s=sphereOf(n);
-  if(s){ h.sphereTask=s; ev(`${h.name} на клетке сферы «${SPHERES[s].name}» (${n}): тянет карту и выполняет вызов до следующей встречи${h.triple==='air'?' (Воздух: можно выбрать любую колоду)':''}.`); }
+  if(s){ h.sphereTask=s; if(h.wk) h.wk.sphere=true; ev(`${h.name} на клетке сферы «${SPHERES[s].name}» (${n}): тянет карту и выполняет вызов до следующей встречи${h.triple==='air'?' (Воздух: можно выбрать любую колоду)':''}.`); }
 }
 function moveHeroes(){
   const miss=S.heroes.filter(h=>!D(h).refl).map(h=>h.name);
@@ -772,14 +805,15 @@ function moveHeroes(){
   const deltas=S.heroes.map(h=>[h,calcDelta(h)]);
   for(const [h,{total,parts}] of deltas){
     const d=D(h); h.from=h.pos; const from=h.pos;
+    h.wk={world:worldOf(h.pos),wasCaptured:!!h.captured};
     const cs=CLASSES[h.cls]?.sphere; h.wheel=h.wheel||{};
     if(d.minimum&&cs) h.wheel[cs]=(h.wheel[cs]||0)+1;
     if(d.sphere) h.wheel[d.sphere]=(h.wheel[d.sphere]||0)+1;
     h.sphereTask=null;
     h.streak=d.refl==='ontime'?(h.streak||0)+1:0;
     if(h.trap){
-      if(d.trapDone){ ev(`${h.name}: вызов ловушки «${TRAPS[h.trap.cell].name}» выполнен, герой остаётся на месте.`); h.trap=null; }
-      else{ h.trap.left--; if(h.trap.left<=0){ h.pos=Math.max(h.trap.to,floorOf(h)); ev(`${h.name}: вызов ловушки не выполнен, спуск на клетку ${h.pos}.`); h.trap=null; } else ev(`${h.name}: у Земли ещё неделя на вызов ловушки.`); }
+      if(d.trapDone){ ev(`${h.name}: вызов ловушки «${TRAPS[h.trap.cell].name}» выполнен, герой остаётся на месте.`); h.trap=null; h.wk.trapSaved=true; }
+      else{ h.trap.left--; if(h.trap.left<=0){ h.pos=Math.max(h.trap.to,floorOf(h)); h.wk.trapFell=true; ev(`${h.name}: вызов ловушки не выполнен, спуск на клетку ${h.pos}.`); h.trap=null; } else ev(`${h.name}: у Земли ещё неделя на вызов ловушки.`); }
     }
     if(h.captured){ h.held=(h.held||0)+total; ev(`${h.name} в плену, ходы копятся: ${h.held}.`); }
     else if(h.atCeiling){ h.carry=(h.carry||0)+total; ev(`${h.name} ждёт пробоя потолка ${h.atCeiling}, ходы копятся: ${h.carry}.`); }
@@ -792,12 +826,12 @@ function moveHeroes(){
 function resolveBridge(id,yes){
   const e=S.events.find(x=>x.id===id); if(!e) return;
   const h=H(e.hero); e.done=true;
-  if(yes&&h&&h.pos===e.from){ h.pos=e.to; ev(`${h.name} проходит мост на ${e.to}.${h.triple==='fire'?' Огонь: ещё +3.':''}`); if(h.triple==='fire') moveBy(h,3); }
+  if(yes&&h&&h.pos===e.from){ h.pos=e.to; if(h.wk) h.wk.bridge=true; ev(`${h.name} проходит мост на ${e.to}.${h.triple==='fire'?' Огонь: ещё +3.':''}`); if(h.triple==='fire') moveBy(h,3); }
   save(); render();
 }
 function breakCeiling(id){
   const h=H(id); if(!h||!h.atCeiling) return;
-  h.broken=[...(h.broken||[]),h.atCeiling];
+  h.broken=[...(h.broken||[]),h.atCeiling]; h.wk=h.wk||{}; h.wk.broke=h.broken.length;
   ev(`${h.name}: потолок ${h.atCeiling} пробит. Перенос ходов: ${h.carry||0}, добавятся на следующей встрече.`);
   S.events.filter(e=>e.type==='ceiling'&&e.hero===h.id).forEach(e=>e.done=true);
   h.atCeiling=0; save(); render();
@@ -811,13 +845,15 @@ function darkMove(){
   else if(S.effects.lanternStop) why.push('фонарь Наставника остановил Тьму');
   else{ steps=7+S.dark.bonus+missed+absent; why.push(`7${S.dark.bonus?' + '+S.dark.bonus+' настройка':''} + ${missed} за рефлексии + ${absent} за пропуски`); }
   S.dark.pos=Math.min(TOP,S.dark.pos+steps);
-  const caught=[];
+  const caught=[], caughtIds=[];
   for(const h of S.heroes){
     if(h.captured||h.pos>=TOP||h.pos>S.dark.pos) continue;
     if(S.effects.earthNoCapture&&h.triple==='earth') continue;
-    h.captured=true; h.held=0; caught.push(h.name);
+    h.captured=true; h.held=0; caught.push(h.name); caughtIds.push(h.id);
   }
-  if(steps>0){ if(caught.length) S.dark.quiet=0; else { S.dark.quiet++; if(S.dark.quiet>=2){ S.dark.bonus++; S.dark.quiet=0; why.push('Тьма усилилась: +1 к ходу'); } } }
+  let faster=false;
+  if(steps>0){ if(caught.length) S.dark.quiet=0; else { S.dark.quiet++; if(S.dark.quiet>=2){ S.dark.bonus++; S.dark.quiet=0; faster=true; why.push('Тьма усилилась: +1 к ходу'); } } }
+  prepareRecap(steps,why,caughtIds,faster);
   S.lastDark={week:S.week,steps,why,caught,pos:S.dark.pos};
   S.log.push({week:S.week,dark:true,steps,caught,pos:S.dark.pos});
   if(S.week>=12) S.finished=true; else S.week++;
@@ -825,11 +861,26 @@ function darkMove(){
   save(); render();
   toast(caught.length?`Тьма прошла ${steps} и взяла в плен: ${caught.join(', ')}`:`Тьма прошла ${steps}. Никто не пойман.`);
 }
+/* итоги встречи для каждого героя: готовятся при «Ход Тьмы», участник видит их при следующем входе */
+function prepareRecap(steps,why,caughtIds,faster){
+  const mvp=S.draft._mvp||'';
+  S.lastMvp=mvp;
+  S.recapDark={turn:S.turn,week:S.week,steps,stop:steps?'':(why[0]||''),caught:caughtIds,faster,mvp};
+  S.recap={};
+  S.heroes.forEach(h=>{
+    const w=h.wk||{};
+    S.recap[h.id]={turn:S.turn,week:S.week,moves:h.last||0,from:h.from??h.pos,to:h.pos,
+      captured:!!h.captured,newCaptured:caughtIds.includes(h.id),wasCaptured:!!w.wasCaptured,held:h.held||0,
+      atCeiling:h.atCeiling||0,carry:h.carry||0,trap:!!h.trap,trapNew:!!w.trapNew,trapSaved:!!w.trapSaved,trapFell:!!w.trapFell,
+      sphere:!!w.sphere,bridge:!!w.bridge,broke:w.broke||0,released:w.released||'',top:h.pos>=TOP,world:worldOf(h.pos),startWorld:w.world||''};
+    delete h.wk;
+  });
+}
 function release(id,how){
   const h=H(id); if(!h) return;
   if(how==='lantern'&&S.lanterns<=0) return toast('Фонарей не осталось');
   snapshot(); if(how==='lantern') S.lanterns--;
-  h.captured=false;
+  h.captured=false; h.wk=h.wk||{}; h.wk.released=how;
   let p=Math.min(TOP,S.dark.pos+1);
   for(const c of CEILINGS){ if(!(h.broken||[]).includes(c)&&p>c&&h.pos<=c){ p=c; h.atCeiling=c; break; } }
   h.pos=Math.max(p,h.pos);
@@ -1078,7 +1129,14 @@ function beginJourney(){
 function afterEnter(){
   if(!ME||isCurator) return;
   retryPendingProfile();
-  if(!lsGet('gnu_hello_'+ME,false)){ startGreeting(); return; }
+  if(!lsGet('gnu_hello_'+ME,false)){ unlockBaseline(); startGreeting(); return; }
+  entryQueue();
+}
+/* очередь при входе: итоги встречи → новые вещи → объявления → вопрос дня */
+function entryQueue(){
+  if(recapPending()) return showRecap(false);
+  if(newUnlocks().length) return showUnlocks(newUnlocks(),entryQueue);
+  if(unseenAnnounce().length) return showAnnounce(entryQueue);
   maybeGreet();
 }
 /* первый тап по экрану разблокирует звук */
@@ -1314,7 +1372,7 @@ function grNext(){ if(GR.i>=GR.lines.length-1) return grClose(); GR.i++; grShow(
 function grClose(){
   clearInterval(GR.typing); stopVoice();
   const g=$('#greet'); g.classList.add('hidden'); g.innerHTML='';
-  if(ME) lsSet('gnu_hello_'+ME,true);
+  if(ME){ const first=!lsGet('gnu_hello_'+ME,false); lsSet('gnu_hello_'+ME,true); if(first) setTimeout(entryQueue,400); }
 }
 
 /* =====================================================================
@@ -1377,7 +1435,11 @@ function pendingFor(h){
   if(c.sphere&&h.sphereTask&&!d.sphere) items.push(['Вызов сферы',h.sphereTask===CLASSES[h.cls]?.sphere?4:2]);
   return {sum:items.reduce((a,i)=>a+i[1],0),items};
 }
-function chainsSVG(){ return `<svg class="chains" viewBox="0 0 100 100" preserveAspectRatio="none" shape-rendering="crispEdges">${[[18,40,82,78],[82,40,18,78]].map(([x1,y1,x2,y2])=>{ let s=''; for(let i=0;i<=10;i++){ const x=x1+(x2-x1)*i/10, y=y1+(y2-y1)*i/10; s+=`<rect x="${x-1.6}" y="${y-1.2}" width="3.2" height="2.4" fill="none" stroke="#c9c2d6" stroke-width=".8"/>`; } return s; }).join('')}</svg>`; }
+function chainsSVG(){
+  const link=(x1,y1,x2,y2)=>{ let g=''; const n=9; for(let i=0;i<=n;i++){ const x=x1+(x2-x1)*i/n, y=y1+(y2-y1)*i/n, a=Math.atan2(y2-y1,x2-x1)*180/Math.PI+(i%2?90:0);
+    g+=`<rect x="${(x-4).toFixed(1)}" y="${(y-2.6).toFixed(1)}" width="8" height="5.2" rx="2.4" fill="none" stroke="#1b1226" stroke-width="3" transform="rotate(${a.toFixed(0)} ${x.toFixed(1)} ${y.toFixed(1)})"/><rect x="${(x-4).toFixed(1)}" y="${(y-2.6).toFixed(1)}" width="8" height="5.2" rx="2.4" fill="none" stroke="#c9c2d6" stroke-width="1.6" transform="rotate(${a.toFixed(0)} ${x.toFixed(1)} ${y.toFixed(1)})"/>`; } return g; };
+  return `<svg class="chains" viewBox="0 0 100 110" aria-hidden="true">${link(6,30,94,88)}${link(94,30,6,88)}</svg>`;
+}
 function heroLine(h,total){
   const now=Date.now(), dl=reflDeadline(now), mt=nextMeeting(now), hr=tzDate(now).getUTCHours();
   const c=claimOf(h);
@@ -1407,8 +1469,9 @@ function vHero(){
     <div class="counter"><div class="n${total<0?' neg':''}" id="cnt">${sign(total)}</div>
       <div class="k">${total<0?'ХОДОВ: ИДЁШЬ НАЗАД':plural(total,'ХОД','ХОДА','ХОДОВ')+' К ВСТРЕЧЕ'}</div>
       ${pend.sum?`<div class="p">ещё +${pend.sum} ждут подтверждения</div>`:''}</div>
-    <div class="hero">${heroBox(lookOfHero(h),{scale:6})}</div>
-    ${h.captured?`<div class="fogc"></div>${chainsSVG()}`:''}
+    <button class="hero" onclick="wardrobeDlg()" aria-label="Гардероб: переодеть героя">${heroBox(lookOfHero(h),{scale:6})}${h.captured?chainsSVG():''}</button>
+    ${S.lastMvp===h.id?'<div class="mvp" title="Самый ценный участник недели">★ САМЫЙ ЦЕННЫЙ</div>':''}
+    ${h.captured?'<div class="fogc"></div>':''}
   </div>
   <p class="say-line">«${esc(heroLine(h,total))}»</p>
   ${meeting?'<div class="panel gold" style="margin-top:12px">Идёт встреча. Задания новой недели откроются после хода Тьмы.</div>':''}
@@ -1416,7 +1479,9 @@ function vHero(){
     <div class="timer"><div class="v">${untilText(mt-now)}</div><div class="k">до встречи<br>${fmtMeeting(mt)}</div></div>
     <div class="timer${!reflOk&&dl-now<30*HOUR&&dl>now?' hot':''}"><div class="v">${reflOk?'Сдана ✓':dl>now?untilText(dl-now):'Срок прошёл'}</div><div class="k">рефлексия<br>до вт 22:00</div></div>
   </div>
+  ${announceBlock()}
   <h2>После прошлой встречи</h2>${status}
+  ${S.recap&&S.recap[h.id]?`<button class="pbtn dark wide" style="margin-top:10px" onclick="showRecap(true)">Итоги встречи · неделя ${S.recap[h.id].week}</button>`:''}
   ${greetCard(h)}`;
 }
 
@@ -1665,9 +1730,9 @@ function loginDlg(){
     catch(e){ toast('Нет связи с таблицей'); }
   };
 }
-const CT=[['week','Неделя'],['resolve','Встреча'],['powers','Силы'],['prof','Анкеты'],['setup','Герои'],['map','Карта'],['over','Обзор'],['data','Данные']];
+const CT=[['week','Неделя'],['resolve','Встреча'],['powers','Силы'],['prof','Анкеты'],['ann','Объявления'],['setup','Герои'],['map','Карта'],['over','Обзор'],['data','Данные']];
 function vCur(){
-  const sub=({week:cWeek,resolve:cResolve,powers:cPowers,prof:cProfiles,setup:cSetup,map:cMap,over:vWeek,data:cData}[ctab]||cWeek)();
+  const sub=({week:cWeek,resolve:cResolve,powers:cPowers,prof:cProfiles,ann:cAnnounce,setup:cSetup,map:cMap,over:vWeek,data:cData}[ctab]||cWeek)();
   return `<h2>Куратор</h2><div class="subtabs">${CT.map(([k,l])=>`<button aria-current="${ctab===k}" onclick="ctab='${k}';render()">${l}</button>`).join('')}</div>${sub}`;
 }
 function tog(label,pressed,on,bad){ return `<button class="tog${bad?' bad':''}" aria-pressed="${!!pressed}" onclick="${on}">${label}</button>`; }
@@ -1910,6 +1975,160 @@ function exportDiary(){
   const t=diary().slice().reverse().map(e=>`${fmtDate(e.at)}\n${e.q?e.q+'\n':''}${e.t}`).join('\n\n---\n\n');
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([t],{type:'text/plain;charset=utf-8'})); a.download='moy-dnevnik.txt'; a.click();
 }
+
+/* =====================================================================
+   ИТОГИ ВСТРЕЧИ: счётчик сгорает шагами, потом — что случилось
+   ===================================================================== */
+const CEIL_ORD=['первый','второй'];
+function recapPending(){ const r=S.recap&&S.recap[ME]; return !!r&&lsGet('gnu_recap_'+ME,0)<r.turn; }
+function recapLines(){
+  const r=S.recap[ME], dk=S.recapDark||{}, h=H(ME), lines=[];
+  const add=(t,cls='',ic='✦')=>lines.push({t,cls,ic});
+  const cells=r.to-r.from;
+  if(r.wasCaptured&&r.captured) add(`Ты в плену. Ходы копятся: ${r.held}. Тебя вытащат — ты здесь не один.`,'bad','⛓');
+  else if(cells>0) add(`Ты прошёл ${cells} ${plural(cells,'клетку','клетки','клеток')}.`,'good','➤');
+  else if(cells<0) add(`Ты отступил на ${-cells} ${plural(-cells,'клетку','клетки','клеток')}.`,'bad','◀');
+  else if(!r.atCeiling) add('Ты остался на месте.','','•');
+  if(r.released) add(`Ты на свободе! ${r.released==='lantern'?'Наставник зажёг фонарь.':'Тройка вытащила тебя.'}`,'good','✧');
+  if(r.bridge) add('Ты прошёл по мосту — короткий путь вперёд.','good','⌒');
+  if(r.trapSaved) add('Вызов ловушки выполнен — ты устоял на месте.','good','✓');
+  if(r.trapFell) add('Вызов ловушки не выполнен — пришлось спуститься.','bad','▼');
+  if(r.trapNew&&r.trap) add('Ты попал в ловушку. Можно не падать: возьми у группы вызов, куратор добавит его в задания.','bad','!');
+  if(r.sphere) add('Ты вытянул карту сферы. Вызов появится в заданиях.','','◆');
+  if(r.broke) add(`Ты пробил ${CEIL_ORD[r.broke-1]||'новый'} потолок! Новый уровень. Ниже ты уже не упадёшь.`,'gold','★');
+  else if(r.atCeiling) add('Ты у потолка. Остальные ходы перенесены на следующую встречу.','gold','▬');
+  if(r.world!==r.startWorld&&r.world!=='Старт'&&r.startWorld) add(`Ты вошёл в мир «${r.world}».`,'gold','☼');
+  if(r.top) add('Ты на вершине! Ты — герой потока.','gold','♛');
+  if(dk.steps) add(`Тьма сделала ${dk.steps} ${plural(dk.steps,'шаг','шага','шагов')}.${dk.faster?' Она стала быстрее.':''}`,'dark','☾');
+  else if(dk.stop) add(`Тьма стояла: ${dk.stop}.`,'good','☾');
+  if(r.newCaptured) add('Ты в плену — тройка уже идёт на помощь.','bad','⛓');
+  const mates=(dk.caught||[]).filter(id=>id!==ME&&tripleOf(H(id)||{})&&tripleOf(H(id))===tripleOf(h));
+  mates.forEach(id=>add(`${firstName(H(id))} из твоей тройки в плену — помогите вытащить.`,'bad','⛓'));
+  const others=(dk.caught||[]).filter(id=>id!==ME&&!mates.includes(id)).map(id=>H(id)).filter(Boolean);
+  if(others.length) add(`Тьма догнала: ${others.map(firstName).join(', ')}.`,'dark','☾');
+  if(!(dk.caught||[]).length&&dk.steps) add('Никого не догнала. Так держать.','good','✓');
+  if(dk.mvp) add(dk.mvp===ME?'Самый ценный участник недели — ты! +3 хода и значок.':`Самый ценный участник недели — ${firstName(H(dk.mvp)||{name:'герой'})}.`,'gold','★');
+  const st=curStreak(h); if(st>=2) add(st>=4?`${st} ${plural(st,'неделя','недели','недель')} подряд без пропусков. Это уже характер.`:`${st} недели подряд без пропусков.`,'gold','✦');
+  return lines;
+}
+function showRecap(replay){
+  const h=H(ME), r=S.recap&&S.recap[ME]; if(!h||!r) return;
+  const start=(r.wasCaptured&&r.captured)?0:Math.max(-30,Math.min(60,r.moves));
+  const ov=document.createElement('div'); ov.id='recap';
+  ov.innerHTML=`<div class="bg">${stageHTML({stars:16})}</div>
+   <div class="rc-in">
+     <div class="rc-h">ИТОГИ ВСТРЕЧИ<br><span>неделя ${r.week}</span></div>
+     <div class="rc-cnt"><div class="n" id="rcn">${sign(start)}</div><div class="k" id="rck">${start?'ходов в путь':'ходов'}</div></div>
+     <div class="rc-road"><div class="rc-plates" id="rcp">${'<i></i>'.repeat(14)}</div><div class="rc-hero${r.captured?' cap':''}" id="rch">${heroBox(lookOfHero(h),{scale:4})}</div></div>
+     <div class="rc-lines" id="rcl"></div>
+     <button class="pbtn wide rc-go" id="rcgo" onclick="closeRecap(${replay?'true':'false'})">${replay?'Закрыть':'Открыть новую неделю'}</button>
+   </div>`;
+  document.body.appendChild(ov); document.body.style.overflow='hidden';
+  const lines=recapLines();
+  const showLines=()=>{
+    const box=$('#rcl'); if(!box) return;
+    if(r.broke||r.top) salute();
+    lines.forEach((l,i)=>{ setTimeout(()=>{ if(!$('#rcl')) return; box.insertAdjacentHTML('beforeend',`<div class="rc-line ${l.cls}"><span>${l.ic}</span><div>${esc(l.t)}</div></div>`); sfx(l.cls==='gold'?'coin':l.cls==='bad'?'step':'click'); },reduceMotion()?0:i*420); });
+    setTimeout(()=>{ $('#rcgo')?.classList.add('show'); },reduceMotion()?0:lines.length*420+200);
+  };
+  if(reduceMotion()||!start){ if(!start) $('#rck').textContent=r.captured?'ходы копятся в плену':'ходов'; setTimeout(showLines,400); return; }
+  // счётчик сгорает: каждый шаг — минус один ход и шаг героя по плитам
+  let n=start; const dir=start>0?-1:1, dt=Math.max(70,Math.min(220,2600/Math.abs(start)));
+  setTimeout(()=>{
+    const iv=setInterval(()=>{
+      if(!$('#rcn')){ clearInterval(iv); return; }
+      n+=dir; $('#rcn').textContent=sign(n);
+      const hh=$('#rch'); hh.classList.remove('hop'); void hh.offsetWidth; hh.classList.add('hop');
+      const pl=$('#rcp'); pl.style.transform=`translateX(${(pl._x=(pl._x||0)+(dir<0?-1:1)*22)%44}px)`;
+      if(Math.abs(n)%2===0) sfx('step');
+      if(n===0){ clearInterval(iv); $('#rcn').classList.add('burn'); $('#rck').textContent='счётчик сгорел — ты сделал ход'; buzz([30,40,30]); setTimeout(showLines,700); }
+    },dt);
+  },900);
+}
+function closeRecap(replay){
+  const r=S.recap[ME]; if(!replay){ lsSet('gnu_recap_'+ME,r.turn); }
+  $('#recap')?.remove(); document.body.style.overflow='';
+  render();
+  if(!replay){ toast('Новая неделя открыта. Задания уже ждут.'); sfx('task'); setTimeout(entryQueue,600); }
+}
+
+/* салют: пробитый потолок, вершина, новый предмет */
+function salute(){
+  if(reduceMotion()) return;
+  const cols=['#ffe08a','#ff7a4d','#7fd0ff','#b46bff','#8fe3a2','#fff'];
+  for(let b=0;b<4;b++) setTimeout(()=>{
+    const x=15+Math.random()*70, y=12+Math.random()*30;
+    for(let i=0;i<22;i++){ const a=i/22*Math.PI*2, d=60+Math.random()*60, el=document.createElement('i'); el.className='spark';
+      el.style.cssText=`left:${x}vw;top:${y}vh;background:${cols[(b+i)%cols.length]};--dx:${Math.cos(a)*d}px;--dy:${Math.sin(a)*d}px`; document.body.appendChild(el); setTimeout(()=>el.remove(),1300); }
+    sfx('coin'); buzz(20);
+  },b*380);
+}
+
+/* ---------- новые вещи гардероба ---------- */
+function allGear(cls){ return [...CLOAKS.map(x=>['Плащ',x]),...(ATTRS[cls]||[]).map(x=>['Атрибут',x]),...AMULETS.map(x=>['Амулет',x]),...AURAS.map(x=>['Аура',x])]; }
+function unlockBaseline(){ const h=H(ME); if(h) lsSet('gnu_unl_'+ME,[...unlockedSet(h)]); }
+function newUnlocks(){
+  const h=H(ME); if(!h) return [];
+  const seen=lsGet('gnu_unl_'+ME,[]);
+  const fresh=[...unlockedSet(h)].filter(k=>!seen.includes(k));
+  return allGear(clsOf(h)).filter(([,x])=>x.lock&&fresh.includes(x.lock));
+}
+function showUnlocks(items,next){
+  unlockBaseline(); salute(); sfx('unlock');
+  openDlg(`<h2>Открыто новое снаряжение!</h2><p class="muted">За постоянство. Нажми на героя на главном экране, чтобы переодеться.</p>
+    ${items.map(([cat,x])=>`<div class="panel" style="display:flex;gap:12px;align-items:center"><span style="font-size:22px">✦</span><div><b>${esc(x.name)}</b><div class="muted" style="font-size:14px">${cat} · ${esc(UNLOCKS[x.lock])}</div></div></div>`).join('')}
+    <div class="row" style="margin-top:12px"><button class="pbtn small" onclick="closeDlg()">Отлично</button></div>`);
+  $('#dlg').addEventListener('close',()=>next&&next(),{once:true});
+}
+
+/* ---------- гардероб после онбординга ---------- */
+let WR=null;
+function wardrobeDlg(){
+  const h=H(ME); if(!h) return;
+  WR={cls:clsOf(h),gear:Object.assign({},gearOf(h))}; sfx('click');
+  openDlg(`<h2>Гардероб</h2><div class="wardrobe"><div id="wprev" style="display:grid;place-items:center;min-height:230px">${heroBox({cls:WR.cls,gear:WR.gear,seed:ME},{scale:7})}</div>
+    <div class="cats">${[['cloak','Плащ'],['attr','Атрибут'],['amulet','Амулет'],['aura','Аура']].map(([k,l])=>`<button aria-current="${gearCat===k}" data-cat="${k}">${l}</button>`).join('')}</div>
+    <div class="items" id="witems"></div><div class="itemname" id="wname"></div></div>
+    <div class="row" style="margin-top:12px"><button class="pbtn small" onclick="wardrobeSave()">Надеть</button><button class="pbtn small dark" onclick="closeDlg()">Отмена</button></div>`);
+  const unl=unlockedSet(h);
+  const nameNow=()=>{ const it=gearList(gearCat,WR.cls).find(x=>x.id===WR.gear[gearCat]); $('#wname').textContent=it?it.name:''; };
+  const draw=()=>{ $('#witems').innerHTML=gearItems(WR.cls,WR.gear,unl); document.querySelectorAll('#witems .item').forEach(b=>b.onclick=()=>{
+    const it=gearList(gearCat,WR.cls).find(x=>x.id===b.dataset.id);
+    if(b.dataset.lock){ sfx('click'); $('#wname').innerHTML=`<b>${esc(it.name)}</b><br>🔒 ${esc(UNLOCKS[b.dataset.lock])}`; return; }
+    WR.gear[gearCat]=it.id; sfx('check'); document.querySelectorAll('#witems .item').forEach(x=>x.setAttribute('aria-pressed',x===b));
+    $('#wprev').innerHTML=heroBox({cls:WR.cls,gear:WR.gear,seed:ME},{scale:7}); nameNow(); }); nameNow(); };
+  document.querySelectorAll('#dlg .cats button').forEach(b=>b.onclick=()=>{ gearCat=b.dataset.cat; sfx('click'); document.querySelectorAll('#dlg .cats button').forEach(x=>x.setAttribute('aria-current',x===b)); draw(); });
+  draw();
+}
+async function wardrobeSave(){
+  const h=H(ME); const p=Object.assign({name:nameOf(h),cls:clsOf(h),triple:tripleOf(h),scroll:{},onb:true},PROFILE||{},{gear:WR.gear});
+  closeDlg(); await saveProfile(p); render(); sfx('unlock'); toast('Новый облик надет');
+}
+
+/* ---------- объявления куратора ---------- */
+function activeAnnounce(){ return (S.announce||[]).filter(a=>Date.now()-Date.parse(a.at)<21*DAY).sort((a,b)=>Date.parse(b.at)-Date.parse(a.at)); }
+function unseenAnnounce(){ const seen=lsGet('gnu_ann_'+ME,[]); return activeAnnounce().filter(a=>!seen.includes(a.id)); }
+function showAnnounce(next){
+  const list=unseenAnnounce(); if(!list.length) return next&&next();
+  lsSet('gnu_ann_'+ME,[...lsGet('gnu_ann_'+ME,[]),...list.map(a=>a.id)].slice(-60));
+  sfx('task');
+  openDlg(`<h2>Объявление куратора</h2>${list.map(a=>`<div class="panel gold"><div class="muted" style="font-size:13px">${esc(fmtDate(a.at))}</div><div style="white-space:pre-wrap">${esc(a.text)}</div></div>`).join('')}
+    <div class="row" style="margin-top:12px"><button class="pbtn small" onclick="closeDlg()">Понятно</button></div>`);
+  $('#dlg').addEventListener('close',()=>{ render(); next&&next(); },{once:true});
+}
+function announceBlock(){
+  const list=activeAnnounce().slice(0,3); if(!list.length) return '';
+  return `<h2>Объявления</h2>${list.map(a=>`<div class="panel gold"><div class="muted" style="font-size:13px">${esc(fmtDate(a.at))}</div><div style="white-space:pre-wrap">${esc(a.text)}</div></div>`).join('')}`;
+}
+function cAnnounce(){
+  return `<p class="muted">Объявление участники увидят при следующем входе, а потом ещё три недели на главном экране.</p>
+   <div class="panel gold"><textarea class="t" id="annt" rows="4" placeholder="Текст объявления"></textarea>
+   <div class="row" style="margin-top:8px"><button class="btn" onclick="addAnnounce()">Опубликовать</button></div></div>
+   ${(S.announce||[]).slice().reverse().map(a=>`<div class="event"><div class="muted" style="font-size:13px">${esc(fmtDate(a.at))}</div><div style="white-space:pre-wrap">${esc(a.text)}</div>
+     <button class="linkbtn" onclick="delAnnounce('${a.id}')">удалить</button></div>`).join('')||'<p class="muted">Объявлений пока нет.</p>'}`;
+}
+function addAnnounce(){ const t=$('#annt').value.trim(); if(!t) return toast('Напиши текст'); S.announce=S.announce||[]; S.announce.push({id:Math.random().toString(36).slice(2,9),text:t,at:new Date().toISOString()}); save(); render(); toast('Объявление опубликовано'); }
+function delAnnounce(id){ if(!confirm('Удалить объявление?')) return; S.announce=(S.announce||[]).filter(a=>a.id!==id); save(); render(); }
 
 /* ---------- диалог и старт ---------- */
 function openDlg(html){ const d=$('#dlg'); d.innerHTML=html; d.showModal(); }
