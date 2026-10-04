@@ -280,7 +280,7 @@ nav.tabs .dot{position:absolute;top:5px;right:calc(50% - 18px);width:9px;height:
 .chains{position:absolute;inset:10% -4% 6%;width:108%;height:84%;z-index:5;pointer-events:none;animation:clink 3s ease-in-out infinite}
 @keyframes clink{0%,100%{transform:translateY(0)}50%{transform:translateY(2px)}}
 .captive .hero{z-index:5}.captive .hero .hsprite{filter:saturate(.45) brightness(.85)}
-.say-line{font-style:italic;color:#e6ecff;margin:12px 0 0;text-align:center}
+
 
 /* ---------- задания ---------- */
 .task{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;background:var(--navy);border:2px solid var(--navy-2);padding:12px 14px;margin-bottom:8px}
@@ -312,6 +312,12 @@ details.past{margin-top:16px}details.past summary{cursor:pointer;color:var(--mut
 @keyframes ypIn{from{transform:translateX(130%)}to{transform:none}}
 @keyframes ypOut{to{transform:translateX(130%)}}
 #yarapop .yara.yp{position:relative;right:auto;bottom:auto;height:120px;animation:none}
+#yarapop .yp .run{display:none;transform:scaleX(-1);object-fit:contain}
+#yarapop .yp.running .run{display:block}
+#yarapop .yp.running .body,#yarapop .yp.running .tail{display:none}
+.say-line{display:block;width:100%;background:none;border:0;cursor:pointer;font:italic 17px/1.55 var(--serif);color:#e6ecff;text-align:center;margin:12px 0 0;padding:4px}
+.say-ic{font-style:normal;font-size:14px;opacity:.7}
+.vrow{margin-top:6px}
 .yp-bub{background:var(--parch);color:#1d1400;padding:10px 12px;font-size:16px;max-width:200px;box-shadow:0 0 0 3px #1d1400,0 0 0 6px var(--gold);margin-bottom:60px}
 .moods{display:flex;justify-content:space-between;gap:6px;margin:6px 0 4px}
 .moods button{flex:1;aspect-ratio:1;max-width:58px;display:grid;place-items:center;background:#0b1233;border:2px solid #26346f;cursor:pointer;padding:0;transition:transform .12s}
@@ -458,7 +464,26 @@ dialog::backdrop{background:#000b}
 .spark{position:fixed;z-index:200;width:6px;height:6px;pointer-events:none;animation:spark2 1.2s ease-out forwards}
 @keyframes spark2{0%{transform:translate(0,0);opacity:1}100%{transform:translate(var(--dx),calc(var(--dy) + 40px));opacity:0}}
 .mvp{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);z-index:4;font-family:var(--pixel);font-size:8px;color:#1d1400;background:var(--gold);padding:5px 8px;box-shadow:0 0 0 2px #6b4f17,0 0 14px #ffd27a;white-space:nowrap}
-@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}.scroll .tx p{opacity:1;transform:none}}
+
+/* ---------- финал у портала ---------- */
+#final{position:fixed;inset:0;z-index:95;background:#050817;overflow-y:auto}
+#final>.stage .cam{animation:none;transform:scale(1.5);transform-origin:50% 23%}
+.fn-glow{position:fixed;inset:0;background:radial-gradient(circle at 50% 30%,#fff3c4aa,#ffd27a33 30%,transparent 60%);animation:pulse 3s ease-in-out infinite;pointer-events:none}
+.fn-in{position:relative;max-width:460px;margin:0 auto;padding:calc(20px + env(safe-area-inset-top,0px)) 16px calc(24px + env(safe-area-inset-bottom,0px));min-height:100%;display:flex;flex-direction:column}
+.fn-h{font-family:var(--pixel);font-size:18px;line-height:1.6;text-align:center;color:#fff;text-shadow:3px 3px 0 #6b3a10,0 0 24px #ffd27a;animation:rise 1.2s ease-out both}
+.fn-scene{position:relative;height:250px;margin:10px -16px 6px}
+.fn-egor{position:absolute;left:2%;bottom:0;height:88%;animation:egorIn 1s .3s ease-out both}
+.fn-egor img{height:100%;display:block}
+.fn-egor .lamp{position:absolute;left:23.5%;top:13%;width:34%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,#bfe7ffcc,#5fb4ff44 40%,#5fb4ff00 70%);mix-blend-mode:screen;animation:lamp 2.2s infinite}
+.fn-hero{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);animation:toPortal 2.4s ease-out both}
+@keyframes toPortal{from{transform:translate(-50%,40px) scale(.8);opacity:0}to{transform:translateX(-50%);opacity:1}}
+.yara.fn-yara{right:3%;height:52%;bottom:0}
+.fn-bub{margin:8px auto 10px;min-height:0}
+.fn-shade{position:fixed;inset:0;background:linear-gradient(#05081733 0,#05081700 30%,#050817cc 58%,#050817 80%);pointer-events:none}
+.fn-lines{background:#0d1640dd;border:2px solid var(--gold-dim);padding:12px 10px 4px;margin-bottom:14px}
+.fn-lines p{opacity:0;animation:ink .8s ease-out forwards;text-align:center;font-size:17px;margin:0 0 8px;text-shadow:1px 1px 0 #000}
+.fn-in .pbtn{margin-top:auto}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}.scroll .tx p,.fn-lines p{opacity:1;transform:none}}
 </style>
 </head>
 <body>
@@ -675,12 +700,31 @@ const HELLO = [
   ['egor_hello_8','egor','Его не видит никто, кроме тебя.'],
   ['yara_hello','yara','Гав! (Яра считает, что ты молодец.)'],
 ];
+/* фразы Наставника: ключ = имя файла voice/КЛЮЧ.mp3. Фразы с числами всегда читает синтезатор */
+const EGOR_LINES = {
+  egor_morning:'Новый день — новые ходы. С чего начнёшь?',
+  egor_evening:'День ещё не закончен. Один маленький шаг — тоже шаг.',
+  egor_before_meeting:'Что ждёт тебя на поле — узнаешь завтра. Главное — прийти с ходами.',
+  egor_captive:'Даже в плену ходы копятся. Тебя вытащат — ты здесь не один.',
+  egor_ceiling:'Потолок — это не стена. Это дверь, которую ты ещё не открыл.',
+  egor_ceil_broken:'Новый уровень. Ниже ты уже не упадёшь.',
+  egor_streak4:'Четыре недели подряд. Это уже характер.',
+  egor_path:'Я не дам тебе лёгкий путь. Я дам тебе путь, который сделает тебя сильнее.',
+  egor_recap:'Встреча позади. Счётчик обнулён — новая неделя, новые ходы.',
+  egor_released:'Ты на свободе. Тройка не бросила своего.',
+  egor_top:'Ты на вершине. Ты — герой потока. Я горжусь тобой.',
+  egor_final_win:'Мы победили Тьму. Вместе. Каждый из вас прошёл свой путь до конца.',
+  egor_final_lose:'В этот раз Тьма оказалась сильнее. Но всё, что ты сделал, остаётся с тобой. Путь продолжается.',
+};
+function lineKey(text){ return Object.keys(EGOR_LINES).find(k=>EGOR_LINES[k]===text)||''; }
 const YARA_LINES = [
   ['yara_1','Гав! (Яра считает, что ты молодец.)'],
   ['yara_2','Яра что-то знает про поле. Но не скажет.'],
   ['yara_3','Гав-гав! Яра принесла тебе немного смелости.'],
   ['yara_4','Яра нюхает воздух: Тьма где-то позади. Не останавливайся.'],
   ['yara_5','Гав! Яра напоминает: маленький шаг — тоже шаг.'],
+  ['yara_6','Гав! Яра проверила: ты сегодня молодец.'],
+  ['yara_7','Яра виляет хвостом. Это значит: продолжай!'],
 ];
 
 /* =====================================================================
@@ -1177,14 +1221,26 @@ function drawSndBtn(){
 function soundDlg(){
   const row=(k,t,d)=>`<div class="sndrow"><div><b>${t}</b><div class="muted" style="font-size:14px">${d}</div></div><button class="switch" role="switch" aria-checked="${!!SND.cfg[k]}" onclick="setSnd('${k}',!SND.cfg['${k}']);this.setAttribute('aria-checked',SND.cfg['${k}']);if('${k}'==='sfx'&&SND.cfg.sfx)sfx('check')" aria-label="${t}"></button></div>`;
   openDlg(`<h2>Звук</h2>${row('voice','Голос','Егор и Яра говорят вслух. Субтитры есть всегда.')}${row('sfx','Звуки','8-битные звуки заданий и ходов')}${row('music','Музыка','Тихий фоновый эмбиент')}
+    <div id="vsel">${voicePickers()}</div>
     <div class="row" style="margin-top:16px"><button class="pbtn small" onclick="closeDlg()">Готово</button></div>`);
 }
+/* выбор голоса из установленных на телефоне; записанные mp3 всегда главнее */
+function voicePickers(){
+  const vs=ruVoices();
+  if(!vs.length) return `<p class="muted" style="font-size:14px;margin-top:12px">На этом телефоне нет русских голосов синтеза. Их можно скачать в настройках телефона (Универсальный доступ → Устная речь на iPhone, Синтез речи на Android).</p>`;
+  const sel=(who,k)=>`<div class="vrow"><label class="f" for="v_${who}">${who==='egor'?'Голос Егора':'Голос Яры'}</label><div class="row"><select class="t" id="v_${who}" style="flex:1" onchange="setSnd('${k}',this.value)"><option value="">Автоматически</option>${vs.map(v=>`<option ${SND.cfg[k]===v.name?'selected':''}>${esc(v.name)}</option>`).join('')}</select>
+    <button class="pbtn small dark" onclick="testVoice('${who}')" aria-label="Прослушать">▶</button></div></div>`;
+  return `<div style="margin-top:12px">${sel('egor','vEgor')}${sel('yara','vYara')}<p class="muted" style="font-size:13px;margin:8px 0 0">Если Наставник записал фразы, играют записи, а синтез включается только для остальных.</p></div>`;
+}
+function testVoice(who){ const was=SND.cfg.voice; SND.cfg.voice=true; speak('',who==='yara'?'Гав! Яра считает, что ты молодец.':'Привет! Здесь нет кубика: каждый ход ты зарабатываешь делом.',who).then(()=>{ SND.cfg.voice=was; }); }
 
 /* голос: сначала файл voice/КЛЮЧ.mp3, если его нет — синтез речи */
 const VOICE={avail:{},audio:null};
+function ruVoices(){ return 'speechSynthesis' in window?speechSynthesis.getVoices().filter(v=>/^ru/i.test(v.lang)):[]; }
 function pickVoice(who){
   if(!('speechSynthesis' in window)) return null;
-  const vs=speechSynthesis.getVoices().filter(v=>/^ru/i.test(v.lang)); if(!vs.length) return null;
+  const vs=ruVoices(); if(!vs.length) return null;
+  const chosen=SND.cfg[who==='yara'?'vYara':'vEgor']; if(chosen){ const v=vs.find(x=>x.name===chosen); if(v) return v; }
   const score=v=>{ let s=0; const n=v.name;
     if(/Google|Natural|Neural|Premium|Enhanced|Online/i.test(n)) s+=3;
     if(who==='egor'&&/Dmitr|Pavel|Yuri|Maxim|Ivan|Male|Муж|Дмитр|Юрий|Максим/i.test(n)) s+=5;
@@ -1192,7 +1248,7 @@ function pickVoice(who){
     if(v.localService) s+=1; return s; };
   return vs.sort((a,b)=>score(b)-score(a))[0];
 }
-if('speechSynthesis' in window) speechSynthesis.onvoiceschanged=()=>{};
+if('speechSynthesis' in window) speechSynthesis.onvoiceschanged=()=>{ const el=$('#vsel'); if(el&&$('#dlg').open) el.innerHTML=voicePickers(); };
 function stopVoice(){ try{ VOICE.audio&&VOICE.audio.pause(); }catch(e){} VOICE.audio=null; try{ window.speechSynthesis&&speechSynthesis.cancel(); }catch(e){} }
 function speak(key,text,who='egor'){
   return new Promise(res=>{
@@ -1207,7 +1263,7 @@ function speak(key,text,who='egor'){
       u.onend=fin; u.onerror=fin; speechSynthesis.speak(u);
       setTimeout(fin,2500+text.length*95);
     };
-    if(VOICE.avail[key]===false) return tts();
+    if(!key||VOICE.avail[key]===false) return tts();
     const a=new Audio(CONFIG.VOICE+key+'.mp3'); VOICE.audio=a; let failed=false;
     const fail=()=>{ if(failed) return; failed=true; VOICE.avail[key]=false; if(VOICE.audio===a) tts(); };
     a.onended=fin; a.onerror=fail;
@@ -1257,11 +1313,13 @@ function afterEnter(){
 /* очередь при входе: итоги встречи → новые вещи → объявления → вопрос дня */
 function entryQueue(){
   if(recapPending()) return showRecap(false);
+  if(finalPending()) return showFinal();
   if(newUnlocks().length) return showUnlocks(newUnlocks(),entryQueue);
   if(unseenAnnounce().length) return showAnnounce(entryQueue);
   if(unseenThanks().length) return showThanks(entryQueue);
   if(checkNewTasks()) return;
   maybeGreet();
+  scheduleYara();
 }
 /* первый тап по экрану разблокирует звук */
 document.addEventListener('pointerdown',()=>{ if(!SND.unlocked){ SND.unlocked=true; actx(); if(SND.cfg.music) startMusic(); } },{once:false,passive:true});
@@ -1584,11 +1642,12 @@ function heroLine(h,total){
   if(dl>now&&dl-now<30*HOUR&&!(c&&c.refl)) return `До 22:00 осталось ${Math.max(1,Math.round((dl-now)/HOUR))} ч. Твои мысли за неделю стоят двух ходов.`;
   if(mt>now&&mt-now<24*HOUR) return 'Что ждёт тебя на поле — узнаешь завтра. Главное — прийти с ходами.';
   if(total<7&&mt-now<3*DAY) return `Пока ${total} ${plural(total,'ход','хода','ходов')}. Тьма ходит на 7. Хватит ли?`;
-  const st=curStreak(h); if(st>=4) return `${st} ${plural(st,'неделя','недели','недель')} подряд. Это уже характер.`;
+  const st=curStreak(h); if(st===4) return EGOR_LINES.egor_streak4; if(st>4) return `${st} ${plural(st,'неделя','недели','недель')} подряд. Это уже характер.`;
   if(hr>=18&&!(c&&(c.task||c.refl||(c.min||[]).some(Boolean)))) return 'День ещё не закончен. Один маленький шаг — тоже шаг.';
   if(hr<12) return 'Новый день — новые ходы. С чего начнёшь?';
   return 'Я не дам тебе лёгкий путь. Я дам тебе путь, который сделает тебя сильнее.';
 }
+function sayLine(el){ const t=el.dataset.t; sfx('click'); speak(lineKey(t),t,'egor'); }
 function vHero(){
   const h=H(ME); if(!h) return `<p>Герой не найден. Попроси у куратора свою личную ссылку.</p>`;
   const {total}=calcDelta(h), pend=pendingFor(h), now=Date.now(), mt=nextMeeting(now), dl=reflDeadline(now);
@@ -1609,7 +1668,7 @@ function vHero(){
     ${S.lastMvp===h.id?'<div class="mvp" title="Самый ценный участник недели">★ САМЫЙ ЦЕННЫЙ</div>':''}
     ${h.captured?'<div class="fogc"></div>':''}
   </div>
-  <p class="say-line">«${esc(heroLine(h,total))}»</p>
+  <button class="say-line" onclick="sayLine(this)" data-t="${esc(heroLine(h,total))}" aria-label="Послушать Наставника">«${esc(heroLine(h,total))}» <span class="say-ic" aria-hidden="true">🔊</span></button>
   ${meeting?'<div class="panel gold" style="margin-top:12px">Идёт встреча. Задания новой недели откроются после хода Тьмы.</div>':''}
   <div class="timers">
     <div class="timer"><div class="v">${untilText(mt-now)}</div><div class="k">до встречи<br>${fmtMeeting(mt)}</div></div>
@@ -1687,15 +1746,34 @@ function vTasks(){
 }
 
 /* ---------- Яра выбегает в угол экрана ---------- */
-function yaraPop(text,key,onTap){
+function yaraPop(text,key,onTap,silent){
   $('#yarapop')?.remove();
   const el=document.createElement('div'); el.id='yarapop';
-  el.innerHTML=`<div class="yp-bub">${esc(text)}</div><div class="yara yp"><img class="tail" src="${imgSrc('yara_tail.webp')}" alt=""><img src="${imgSrc('yara.webp')}" alt="Яра"></div>`;
-  el.onclick=()=>{ el.remove(); onTap&&onTap(); };
-  document.body.appendChild(el); sfx('bark'); buzz(40);
-  speak(key||'yara_1',text,'yara');
-  setTimeout(()=>el.classList.add('out'),7000); setTimeout(()=>el.remove(),7600);
+  el.innerHTML=`<div class="yp-bub${silent?' hidden':''}">${esc(text)}</div><div class="yara yp running"><img class="run" src="${imgSrc('yara_run.webp')}" alt=""><img class="tail" src="${imgSrc('yara_tail.webp')}" alt=""><img class="body" src="${imgSrc('yara.webp')}" alt="Яра"></div>`;
+  document.body.appendChild(el);
+  // вбегает: кадры бега, потом стоит и виляет хвостом
+  const run=el.querySelector('.run'); let f=0;
+  const iv=reduceMotion()?0:setInterval(()=>{ run.src=imgSrc(f++%2?'yara_run.webp':'yara_walk.webp'); },110);
+  setTimeout(()=>{ clearInterval(iv); el.querySelector('.yp').classList.remove('running'); },reduceMotion()?0:600);
+  const say=()=>{ el.querySelector('.yp-bub').classList.remove('hidden'); sfx('bark'); buzz(40); speak(key||'yara_1',text,'yara'); };
+  let told=!silent;
+  el.onclick=()=>{ if(!told){ told=true; say(); clearTimeout(el._t1); el._t1=setTimeout(()=>el.classList.add('out'),6000); return; } el.remove(); onTap&&onTap(); };
+  if(!silent) say(); else sfx('step');
+  el._t1=setTimeout(()=>el.classList.add('out'),silent?9000:7000);
+  setTimeout(()=>{ if(!el.isConnected) return; if(el.classList.contains('out')) el.remove(); else setTimeout(()=>el.remove(),7000); },silent?9600:7600);
 }
+/* Яра иногда сама выбегает в угол: не чаще трёх раз в день */
+function scheduleYara(){
+  clearTimeout(scheduleYara.t);
+  scheduleYara.t=setTimeout(()=>{
+    const day=todayKey(), c=lsGet('gnu_yara_'+ME,{});
+    const busy=$('#dlg').open||!$('#onb').classList.contains('hidden')||!$('#greet').classList.contains('hidden')||$('#recap')||$('#final')||$('#yarapop')||document.visibilityState!=='visible';
+    if(!busy&&ME&&!isCurator&&(c[day]||0)<3){ c[day]=(c[day]||0)+1; lsSet('gnu_yara_'+ME,{[day]:c[day]});
+      const [k,t]=YARA_LINES[Math.floor(Math.random()*YARA_LINES.length)]; yaraPop(t,k,null,true); }
+    scheduleYara();
+  },(40+Math.random()*80)*1000);
+}
+
 function checkNewTasks(){
   const n=unseenTasks(); if(!n.length) return false;
   const shown=lsGet('gnu_tpop_'+ME,[]); const fresh=n.filter(t=>!shown.includes(t.id)); if(!fresh.length) return false;
@@ -2519,7 +2597,9 @@ function showRecap(replay){
     const box=$('#rcl'); if(!box) return;
     if(r.broke||r.top) salute();
     lines.forEach((l,i)=>{ setTimeout(()=>{ if(!$('#rcl')) return; box.insertAdjacentHTML('beforeend',`<div class="rc-line ${l.cls}"><span>${l.ic}</span><div>${esc(l.t)}</div></div>`); sfx(l.cls==='gold'?'coin':l.cls==='bad'?'step':'click'); },reduceMotion()?0:i*420); });
-    setTimeout(()=>{ $('#rcgo')?.classList.add('show'); },reduceMotion()?0:lines.length*420+200);
+    setTimeout(()=>{ $('#rcgo')?.classList.add('show');
+      const k=r.top?'':r.broke?'egor_ceil_broken':r.released?'egor_released':(r.captured&&!r.wasCaptured)?'egor_captive':'egor_recap';
+      if(k&&!replay) speak(k,EGOR_LINES[k],'egor'); },reduceMotion()?0:lines.length*420+200);
   };
   if(reduceMotion()||!start){ if(!start) $('#rck').textContent=r.captured?'ходы копятся в плену':'ходов'; setTimeout(showLines,400); return; }
   // счётчик сгорает: каждый шаг — минус один ход и шаг героя по плитам
@@ -2537,9 +2617,48 @@ function showRecap(replay){
 }
 function closeRecap(replay){
   const r=S.recap[ME]; if(!replay){ lsSet('gnu_recap_'+ME,r.turn); }
-  $('#recap')?.remove(); document.body.style.overflow='';
+  $('#recap')?.remove(); document.body.style.overflow=''; stopVoice();
   render();
   if(!replay){ toast('Новая неделя открыта. Задания уже ждут.'); sfx('task'); setTimeout(entryQueue,600); }
+}
+
+/* =====================================================================
+   ФИНАЛ: вершина героя и итог всего потока — сцена у портала
+   ===================================================================== */
+function finalPending(){
+  const h=H(ME); if(!h) return false;
+  if(S.finished&&!lsGet('gnu_final_'+ME,false)) return true;
+  return h.pos>=TOP&&!lsGet('gnu_top_'+ME,false);
+}
+function showFinal(){
+  const h=H(ME); if(!h) return;
+  const flow=S.finished&&!lsGet('gnu_final_'+ME,false);
+  const all80=S.heroes.length&&S.heroes.every(x=>x.pos>80||(x.broken||[]).includes(80));
+  const tops=S.heroes.filter(x=>x.pos>=TOP), tr=tripleOf(h), seal=flow&&tr&&!S.triples[tr]?.used;
+  const key=flow?(all80?'egor_final_win':'egor_final_lose'):'egor_top';
+  const title=flow?(all80?'ТЬМА ПОБЕЖДЕНА':'ФИНАЛ ПОТОКА'):'ВЕРШИНА';
+  const lines=flow?[
+    all80?'Все двенадцать героев прошли второй потолок. Группа победила Тьму.':'Не все герои прошли второй потолок. В этот раз Тьма оказалась сильнее.',
+    tops.length?`На вершине: ${tops.map(firstName).join(', ')}.`:'',
+    h.pos>=TOP?'Ты — герой потока.':'',
+    seal?'Твоя тройка не тронула силу все 11 недель: Печать терпения и +10 ходов.':'',
+  ].filter(Boolean):['Ты дошёл до вершины.','Ты — герой потока. Здесь ты остаёшься до конца, а твой пример ведёт остальных.'];
+  const ov=document.createElement('div'); ov.id='final';
+  ov.innerHTML=`${stageHTML({stars:26})}<div class="fn-glow"></div><div class="fn-shade"></div>
+   <div class="fn-in"><div class="fn-h">${title}</div>
+    <div class="fn-scene"><div class="fn-egor"><img src="${imgSrc('egor.webp')}" alt="Егор"><div class="lamp"></div></div>
+      <div class="fn-hero">${heroBox(lookOfHero(h),{scale:4.4})}</div>
+      <div class="yara fn-yara"><img class="tail" src="${imgSrc('yara_tail.webp')}" alt=""><img src="${imgSrc('yara.webp')}" alt="Яра"></div></div>
+    <div class="bubble fn-bub"><div class="who">ЕГОР · НАСТАВНИК</div><div class="say">${esc(EGOR_LINES[key])}</div></div>
+    <div class="fn-lines">${lines.map((l,i)=>`<p style="animation-delay:${1.2+i*.6}s">${esc(l)}</p>`).join('')}</div>
+    <button class="pbtn wide" onclick="closeFinal(${flow})">${flow?'Спасибо за путь':'Остаться на вершине'}</button></div>`;
+  document.body.appendChild(ov); document.body.style.overflow='hidden';
+  sfx('portal'); setTimeout(()=>{ salute(); sfx('unlock'); },900); setTimeout(salute,2600);
+  setTimeout(()=>speak(key,EGOR_LINES[key],'egor'),1500);
+}
+function closeFinal(flow){
+  lsSet(flow?'gnu_final_'+ME:'gnu_top_'+ME,true); if(flow) lsSet('gnu_top_'+ME,true);
+  stopVoice(); $('#final')?.remove(); document.body.style.overflow=''; render(); setTimeout(entryQueue,400);
 }
 
 /* салют: пробитый потолок, вершина, новый предмет */
