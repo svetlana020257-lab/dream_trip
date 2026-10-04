@@ -24,6 +24,7 @@ function doGet(e) {
     const profiles = loadProfiles_();
     const out = { ok: true, state: publicState_(state, profiles) };
     const hero = heroByCode_(state, p.code);
+    if (out.state) out.state.tasks = hero ? tasksForHero_(state, hero, profiles) : [];
     if (hero) {
       out.me = hero.id;
       const c = loadClaims_()[hero.id];
@@ -48,6 +49,21 @@ function publicState_(state, profiles) {
   });
   return s;
 }
+/* личные задания: участнику отдаём только адресованные ему (лично, его тройке или всем) */
+function tasksForHero_(state, hero, profiles) {
+  const p = profiles[hero.id] || {};
+  const triple = hero.tripleOk ? hero.triple : (p.triple || hero.triple || '');
+  return (state.tasks || []).filter(t => t && t.to && (
+    t.to.type === 'all' || (t.to.type === 'hero' && t.to.id === hero.id) || (t.to.type === 'triple' && t.to.id === triple)));
+}
+/* отметки личных заданий: {idЗадания: 1} */
+function cleanPersonal_(src) {
+  const out = {};
+  if (!src || typeof src !== 'object') return out;
+  Object.keys(src).slice(0, 80).forEach(k => { if (/^[a-z0-9]{4,12}$/i.test(k) && src[k]) out[k] = 1; });
+  return out;
+}
+
 function heroByCode_(state, code) {
   if (!state || !code) return null;
   return (state.heroes || []).find(h => h.code && h.code === String(code)) || null;
@@ -75,6 +91,7 @@ function doPost(e) {
         week: state.week,
         task: !!c.task, refl: !!c.refl, sphere: !!c.sphere, trap: !!c.trap,
         min: (Array.isArray(c.min) ? c.min : []).slice(0, 7).map(x => (x ? 1 : 0)),
+        personal: cleanPersonal_(c.personal),
         at: new Date().toISOString(),
       };
       while (clean.min.length < 7) clean.min.push(0);

@@ -295,6 +295,24 @@ nav.tabs .dot{position:absolute;top:5px;right:calc(50% - 18px);width:9px;height:
 .days button:disabled{opacity:.6;cursor:default}
 
 /* ---------- клан ---------- */
+.minicnt{position:sticky;top:58px;z-index:10;display:flex;justify-content:space-between;align-items:center;gap:8px;background:linear-gradient(#1c2a62,#111b45);border:3px solid var(--gold);padding:10px 12px;margin:6px 0 4px;box-shadow:0 4px 0 #000a}
+.minicnt b{font-family:var(--pixel);font-size:16px;color:var(--gold-hi)}
+.minicnt span{font-size:13px;color:var(--muted);text-align:right}
+.minicnt.bump{animation:bump .4s ease-out}
+@keyframes bump{40%{transform:scale(1.06);box-shadow:0 0 22px #ffd27a}}
+.coin{position:fixed;left:0;top:0;z-index:150;width:18px;height:18px;pointer-events:none;background:radial-gradient(circle at 35% 35%,#fff3c4 0 18%,#ffd34d 20% 55%,#b8893a 58%);box-shadow:0 0 0 2px #6b4f17,0 0 10px #ffd27a}
+.task .newbadge{display:inline-block;font-family:var(--pixel);font-size:8px;color:#1d1400;background:var(--gold);padding:4px 6px;margin-bottom:6px;animation:glow 1.6s ease-in-out infinite}
+.task.new{border-color:var(--gold);box-shadow:0 0 14px #ffd27a55}
+.task .kind{font-size:12px;color:var(--gold);text-transform:uppercase;letter-spacing:1px}
+.task .mv{font-size:14px;color:var(--gold-hi);margin-top:2px}
+.task .pbtn.small{min-height:44px;font-size:8px;padding:8px 10px}
+details.past{margin-top:16px}details.past summary{cursor:pointer;color:var(--muted);padding:8px 0}
+#yarapop{position:fixed;right:8px;bottom:calc(var(--nav-h) + 10px + env(safe-area-inset-bottom,0px));z-index:60;display:flex;align-items:flex-end;gap:6px;cursor:pointer;animation:ypIn .6s ease-out both}
+#yarapop.out{animation:ypOut .6s ease-in forwards}
+@keyframes ypIn{from{transform:translateX(130%)}to{transform:none}}
+@keyframes ypOut{to{transform:translateX(130%)}}
+#yarapop .yara.yp{position:relative;right:auto;bottom:auto;height:120px;animation:none}
+.yp-bub{background:var(--parch);color:#1d1400;padding:10px 12px;font-size:16px;max-width:200px;box-shadow:0 0 0 3px #1d1400,0 0 0 6px var(--gold);margin-bottom:60px}
 .mates{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .mate{background:#0d1640;border:2px solid #26346f;padding:8px 4px;text-align:center;font-size:14px}
 .mate .mini{height:72px}
@@ -655,7 +673,7 @@ const reduceMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
 function lsGet(k,def){ try{ const v=localStorage.getItem(k); return v==null?def:JSON.parse(v); }catch(e){ return def; } }
 function lsSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
 function setSync(t){ $('#sync').textContent=t; }
-function toast(t){ document.querySelectorAll('.toast').forEach(x=>x.remove()); const el=document.createElement('div'); el.className='toast'; el.textContent=t; document.body.appendChild(el); setTimeout(()=>el.remove(),3400); }
+function toast(t){ document.querySelectorAll('.toast').forEach(x=>x.remove()); const el=document.createElement('div'); el.className='toast'; el.textContent=t; if(document.getElementById('yarapop')){ el.style.bottom='auto'; el.style.top='calc(70px + env(safe-area-inset-top,0px))'; } document.body.appendChild(el); setTimeout(()=>el.remove(),3400); }
 async function api(body){ const r=await fetch(CONFIG.API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)}); return r.json(); }
 
 /* имя и облик героя: участник может поправить имя в анкете */
@@ -721,6 +739,7 @@ function afterLoad(){
   if(!tab) tab=isCurator?'cur':'hero';
   render();
   if(firstLoad){ firstLoad=false; dataReady=true; startFlow(); }
+  else if(ME&&!isCurator&&splashDone&&$('#onb').classList.contains('hidden')&&$('#greet').classList.contains('hidden')&&!$('#recap')) checkNewTasks();
 }
 let saveTimer=null;
 function stripLooks(st){ const c=JSON.parse(JSON.stringify(st)); (c.heroes||[]).forEach(h=>delete h.look); return c; }
@@ -755,10 +774,15 @@ function myClaim(){ return CLAIMS[ME]||(CLAIMS[ME]={week:S.week,task:false,refl:
 function claimOf(h){ const c=CLAIMS[h.id]; return c&&c.week===S.week?c:null; }
 let claimTimer=null;
 function setClaim(key,val){
-  const c=myClaim(); if(c.week!==S.week){ CLAIMS[ME]={week:S.week,task:false,refl:false,min:[0,0,0,0,0,0,0],sphere:false,trap:false}; }
+  const c=myClaim(); if(c.week!==S.week){ CLAIMS[ME]={week:S.week,task:false,refl:false,min:[0,0,0,0,0,0,0],sphere:false,trap:false,personal:c.personal||{}}; }
   const cc=myClaim();
-  if(key==='min') cc.min[val]=cc.min[val]?0:1; else cc[key]=!cc[key];
+  if(key==='min') cc.min[val]=cc.min[val]?0:1;
+  else if(key==='personal'){ cc.personal=cc.personal||{}; if(cc.personal[val]) delete cc.personal[val]; else cc.personal[val]=1; }
+  else cc[key]=!cc[key];
   render();
+  sendClaim();
+}
+function sendClaim(){
   if(DEMO){ localStorage.setItem('gnu_claims',JSON.stringify(CLAIMS)); return; }
   clearTimeout(claimTimer);
   claimTimer=setTimeout(()=>{
@@ -778,6 +802,26 @@ function snapshot(){ const c=JSON.parse(JSON.stringify(S)); c.prev=null; S.prev=
 function tripleMembers(t){ return S.heroes.filter(h=>h.triple===t); }
 function tripleOnTime(t){ const m=tripleMembers(t); return m.length>0&&m.every(h=>D(h).refl==='ontime'); }
 
+/* ---------- личные задания от куратора ---------- */
+const TASK_KINDS={custom:'Задание',sphere:'Карта сферы',trap:'Вызов ловушки',guard:'Испытание Стража',help:'Задание помощи'};
+function taskTo(t){
+  if(!t||!t.to) return [];
+  if(t.to.type==='hero') return S.heroes.filter(h=>h.id===t.to.id);
+  if(t.to.type==='triple') return S.heroes.filter(h=>tripleOf(h)===t.to.id&&h.id!==t.prisoner);
+  return S.heroes.filter(h=>h.id!==t.prisoner);
+}
+function tasksFor(h){ return h?(S.tasks||[]).filter(t=>taskTo(t).some(x=>x.id===h.id)):[]; }
+function personalClaim(h,id){ return !!((CLAIMS[h.id]||{}).personal||{})[id]; }
+/* paid — засчитано на встрече, failed — не выполнено к сроку, ok/no — решение куратора, claimed — герой отметил */
+function tStatus(t,h){
+  if(t.paid&&t.paid[h.id]) return 'paid';
+  if(t.failed&&t.failed[h.id]) return 'failed';
+  const st=(t.status||{})[h.id];
+  if(st==='ok'||st==='no') return st;
+  return personalClaim(h,t.id)?'claimed':'open';
+}
+function tActive(t,h){ const st=tStatus(t,h); return st!=='paid'&&st!=='failed'; }
+
 function calcDelta(h){
   const d=D(h), parts=[];
   if(d.task) parts.push(['Задание потока',5]);
@@ -791,6 +835,7 @@ function calcDelta(h){
   if(d.refl==='ontime'&&((h.streak||0)+1)%4===0) parts.push(['4 рефлексии подряд',3]);
   if(d.adjust) parts.push(['Поправка / сила тройки',Number(d.adjust)]);
   if(h.carry&&!h.atCeiling&&!h.captured) parts.push(['Перенос с потолка',h.carry]);
+  tasksFor(h).forEach(t=>{ if(tStatus(t,h)==='ok'&&Number(t.moves)) parts.push([t.title,Number(t.moves)]); });
   return {total:parts.reduce((a,p)=>a+p[1],0),parts};
 }
 function moveBy(h,n){
@@ -812,29 +857,39 @@ function land(h){
   if(TRAPS[n]){
     if(S.effects.fireNoTraps&&h.triple==='fire'){ ev(`${h.name} проходит ловушку «${TRAPS[n].name}»: сила Огня`); return; }
     h.trap={cell:n,to:TRAPS[n].to,left:h.triple==='earth'?2:1}; if(h.wk) h.wk.trapNew=true;
-    ev(`${h.name} в ловушке «${TRAPS[n].name}» (${n}). Берёт у группы вызов; не выполнит — спустится на ${TRAPS[n].to}.`); return;
+    ev(`${h.name} в ловушке «${TRAPS[n].name}» (${n}). Берёт у группы вызов; не выполнит — спустится на ${TRAPS[n].to}.`,{type:'trap',hero:h.id}); return;
   }
   if(BRIDGES[n]){ const b=BRIDGES[n]; ev(`${h.name} на мосту «${b.name}» ${n} → ${b.to}. Условие: ${b.cond}.`,{type:'bridge',hero:h.id,from:n,to:b.to}); return; }
   if(MIRRORS.includes(n)){ ev(`${h.name} на Зеркале (${n}): каждый говорит одну честную фразу.`); return; }
   if(CONFIG.CHEST_CELLS.includes(n)){ ev(`${h.name} на Сундуке (${n}): тянет карту и сразу разыгрывает.`); return; }
   const s=sphereOf(n);
-  if(s){ h.sphereTask=s; if(h.wk) h.wk.sphere=true; ev(`${h.name} на клетке сферы «${SPHERES[s].name}» (${n}): тянет карту и выполняет вызов до следующей встречи${h.triple==='air'?' (Воздух: можно выбрать любую колоду)':''}.`); }
+  if(s){ h.sphereTask=s; if(h.wk) h.wk.sphere=true; ev(`${h.name} на клетке сферы «${SPHERES[s].name}» (${n}): тянет карту и выполняет вызов до следующей встречи${h.triple==='air'?' (Воздух: можно выбрать любую колоду)':''}.`,{type:'sphere',hero:h.id,sphere:s}); }
 }
 function moveHeroes(){
   const miss=S.heroes.filter(h=>!D(h).refl).map(h=>h.name);
   if(miss.length) return toast('Отметь рефлексию: '+miss.join(', '));
   snapshot(); S.events=[]; S.turn=(S.turn||0)+1; S.dark.from=S.dark.pos;
+  // сначала срабатывают подтверждённые личные задания: испытание Стража и задание помощи
+  const pre={};
+  S.heroes.forEach(h=>{ pre[h.id]={from:h.pos,world:worldOf(h.pos),wasCaptured:!!h.captured}; });
+  S.heroes.forEach(h=>tasksFor(h).forEach(t=>{ if(t.kind==='guard'&&tStatus(t,h)==='ok'&&h.atCeiling){ breakCore(h); pre[h.id].broke=h.broken.length; } }));
+  (S.tasks||[]).forEach(t=>{
+    if(t.kind!=='help'||t.applied||!t.prisoner) return;
+    const pr=H(t.prisoner); if(!pr||!pr.captured) return;
+    if(taskTo(t).some(x=>tStatus(t,x)==='ok')){ releaseCore(pr,'triple'); pre[pr.id].released='triple'; t.applied=S.turn; }
+  });
   const deltas=S.heroes.map(h=>[h,calcDelta(h)]);
   for(const [h,{total,parts}] of deltas){
-    const d=D(h); h.from=h.pos; const from=h.pos;
-    h.wk={world:worldOf(h.pos),wasCaptured:!!h.captured};
+    const d=D(h), pr=pre[h.id]; h.from=pr.from; const from=pr.from;
+    h.wk={world:pr.world,wasCaptured:pr.wasCaptured,broke:pr.broke||0,released:pr.released||''};
+    const trapOk=d.trapDone||tasksFor(h).some(t=>t.kind==='trap'&&tStatus(t,h)==='ok');
     const cs=CLASSES[h.cls]?.sphere; h.wheel=h.wheel||{};
     if(d.minimum&&cs) h.wheel[cs]=(h.wheel[cs]||0)+1;
     if(d.sphere) h.wheel[d.sphere]=(h.wheel[d.sphere]||0)+1;
     h.sphereTask=null;
     h.streak=d.refl==='ontime'?(h.streak||0)+1:0;
     if(h.trap){
-      if(d.trapDone){ ev(`${h.name}: вызов ловушки «${TRAPS[h.trap.cell].name}» выполнен, герой остаётся на месте.`); h.trap=null; h.wk.trapSaved=true; }
+      if(trapOk){ ev(`${h.name}: вызов ловушки «${TRAPS[h.trap.cell].name}» выполнен, герой остаётся на месте.`); h.trap=null; h.wk.trapSaved=true; }
       else{ h.trap.left--; if(h.trap.left<=0){ h.pos=Math.max(h.trap.to,floorOf(h)); h.wk.trapFell=true; ev(`${h.name}: вызов ловушки не выполнен, спуск на клетку ${h.pos}.`); h.trap=null; } else ev(`${h.name}: у Земли ещё неделя на вызов ловушки.`); }
     }
     if(h.captured){ h.held=(h.held||0)+total; ev(`${h.name} в плену, ходы копятся: ${h.held}.`); }
@@ -842,6 +897,12 @@ function moveHeroes(){
     else { h.carry=0; moveBy(h,total); }
     h.last=total;
     S.log.push({week:S.week,hero:h.id,delta:total,from,to:h.pos,parts});
+    tasksFor(h).forEach(t=>{ const st=tStatus(t,h); if(st==='paid'||st==='failed') return;
+      if(t.kind==='sphere'&&st==='ok'&&t.sphere) h.wheel[t.sphere]=(h.wheel[t.sphere]||0)+1;
+      const closed=(t.kind==='trap'&&!h.trap)||(t.kind==='guard'&&!h.atCeiling)||(t.kind==='help'&&!H(t.prisoner)?.captured)||(t.due&&Date.parse(t.due)<=Date.now()+12*HOUR);
+      if(st==='ok'){ t.paid=t.paid||{}; t.paid[h.id]=S.turn; }
+      else if(closed){ t.failed=t.failed||{}; t.failed[h.id]=S.turn; }
+    });
   }
   S.phase='resolve'; save(); render();
 }
@@ -851,12 +912,12 @@ function resolveBridge(id,yes){
   if(yes&&h&&h.pos===e.from){ h.pos=e.to; if(h.wk) h.wk.bridge=true; ev(`${h.name} проходит мост на ${e.to}.${h.triple==='fire'?' Огонь: ещё +3.':''}`); if(h.triple==='fire') moveBy(h,3); }
   save(); render();
 }
-function breakCeiling(id){
-  const h=H(id); if(!h||!h.atCeiling) return;
+function breakCeiling(id){ const h=H(id); if(!h||!h.atCeiling) return; breakCore(h); save(); render(); }
+function breakCore(h){
   h.broken=[...(h.broken||[]),h.atCeiling]; h.wk=h.wk||{}; h.wk.broke=h.broken.length;
-  ev(`${h.name}: потолок ${h.atCeiling} пробит. Перенос ходов: ${h.carry||0}, добавятся на следующей встрече.`);
+  ev(`${h.name}: потолок ${h.atCeiling} пробит. Перенос ходов: ${h.carry||0}${S.phase==='resolve'?', добавятся на следующей встрече':''}.`);
   S.events.filter(e=>e.type==='ceiling'&&e.hero===h.id).forEach(e=>e.done=true);
-  h.atCeiling=0; save(); render();
+  h.atCeiling=0;
 }
 function darkMove(){
   if(S.events.some(e=>e.type==='bridge'&&!e.done)&&!confirm('Есть неподтверждённые мосты. Всё равно сделать ход Тьмы?')) return;
@@ -902,6 +963,9 @@ function release(id,how){
   const h=H(id); if(!h) return;
   if(how==='lantern'&&S.lanterns<=0) return toast('Фонарей не осталось');
   snapshot(); if(how==='lantern') S.lanterns--;
+  releaseCore(h,how); save(); render();
+}
+function releaseCore(h,how){
   h.captured=false; h.wk=h.wk||{}; h.wk.released=how;
   let p=Math.min(TOP,S.dark.pos+1);
   for(const c of CEILINGS){ if(!(h.broken||[]).includes(c)&&p>c&&h.pos<=c){ p=c; h.atCeiling=c; break; } }
@@ -909,7 +973,6 @@ function release(id,how){
   const held=h.held||0; h.held=0;
   ev(`${h.name} на свободе (${how==='lantern'?'фонарь Наставника':'помогла тройка'}), клетка ${h.pos}.`);
   if(h.atCeiling) h.carry=(h.carry||0)+held; else moveBy(h,held);
-  save(); render();
 }
 function undo(){
   if(!S.prev) return toast('Нечего отменять');
@@ -1155,6 +1218,7 @@ function entryQueue(){
   if(recapPending()) return showRecap(false);
   if(newUnlocks().length) return showUnlocks(newUnlocks(),entryQueue);
   if(unseenAnnounce().length) return showAnnounce(entryQueue);
+  if(checkNewTasks()) return;
   maybeGreet();
 }
 /* первый тап по экрану разблокирует звук */
@@ -1252,7 +1316,7 @@ function unlockedSet(h){
 function weekClean(l){ const n=(l.parts||[]).map(p=>p[0]); return n.includes('Задание потока')&&n.includes('Рефлексия вовремя')&&n.includes('Встреча'); }
 function bestStreak(h){ let best=0,cur=0; S.log.filter(l=>l.hero===h.id).sort((a,b)=>a.week-b.week).forEach(l=>{ cur=weekClean(l)?cur+1:0; best=Math.max(best,cur); }); return best; }
 function curStreak(h){ let cur=0; S.log.filter(l=>l.hero===h.id).sort((a,b)=>a.week-b.week).forEach(l=>{ cur=weekClean(l)?cur+1:0; }); return cur; }
-function personalDone(h){ return (S.tasks||[]).filter(t=>t.status&&t.status[h.id]==='ok').length; }
+function personalDone(h){ return tasksFor(h).filter(t=>['ok','paid'].includes(tStatus(t,h))).length; }
 function gearList(cat){ return cat==='glow'?GLOWS:cat==='plate'?PLATES:cat==='amulet'?AMULETS:AURAS; }
 function gearPreview(){ return heroBox({cls:ONB.d.cls,v:ONB.d.v,gear:ONB.d.gear},{scale:6}); }
 function gearItems(cls,gear,unl){
@@ -1433,7 +1497,6 @@ function render(){
   app.innerHTML=v();
   if(tab==='more') bindFaq();
 }
-function tabDot(k){ return false; }
 function go(k){ if(tab!==k) sfx('click'); tab=k; render(); window.scrollTo(0,0); }
 
 /* ---------- вход без личной ссылки ---------- */
@@ -1458,13 +1521,12 @@ function seedDemo(){
 
 /* ---------- главный экран: герой ---------- */
 function pendingFor(h){
-  const c=claimOf(h); if(!c) return {sum:0,items:[]};
-  const d=D(h), items=[];
+  const c=claimOf(h)||{}, d=D(h), items=[];
+  tasksFor(h).forEach(t=>{ if(tStatus(t,h)==='claimed'&&Number(t.moves)) items.push([t.title,Number(t.moves)]); });
   if(c.task&&!d.task) items.push(['Задание потока',5]);
   if(c.refl&&!d.refl) items.push(['Рефлексия',2]);
   const days=(c.min||[]).filter(Boolean).length;
   if(days>=5&&!d.minimum) items.push(['Минимум дня',2]);
-  if(c.sphere&&h.sphereTask&&!d.sphere) items.push(['Вызов сферы',h.sphereTask===CLASSES[h.cls]?.sphere?4:2]);
   return {sum:items.reduce((a,i)=>a+i[1],0),items};
 }
 function chainsSVG(){
@@ -1517,26 +1579,168 @@ function vHero(){
   ${greetCard(h)}`;
 }
 
-/* ---------- задания (личные задания куратора — в следующей части) ---------- */
+/* ---------- задания ---------- */
+const DONE_LINES=['Слово сдержано. +{N} к пути.','Ещё +{N}. Тьма это заметила.','+{N}. Шаг за шагом — к вершине.','Сдержанное слово — ещё +{N}.'];
+function doneLine(n){ if(!n) return 'Слово сдержано.'; return DONE_LINES[Math.floor(Math.random()*DONE_LINES.length)].replace('{N}',n); }
+function fmtDue(iso){ if(!iso) return ''; const t=Date.parse(iso); return t?fmtMeeting(t):''; }
+function unseenTasks(){ const h=H(ME); if(!h) return []; const seen=lsGet('gnu_tseen_'+ME,[]); return tasksFor(h).filter(t=>tActive(t,h)&&!seen.includes(t.id)); }
+function markTasksSeen(){ const h=H(ME); if(!h) return; lsSet('gnu_tseen_'+ME,[...new Set([...lsGet('gnu_tseen_'+ME,[]),...tasksFor(h).map(t=>t.id)])].slice(-200)); }
+function tabDot(k){ return k==='tasks'&&!!ME&&unseenTasks().length>0; }
+
+/* отметка выполнения: монетки летят в счётчик, звук и вибрация */
+function markDone(btn,key,val,moves){
+  const was=key==='personal'?personalClaim(H(ME),val):key==='min'?!!(myClaim().min||[])[val]:!!myClaim()[key];
+  const r=btn.getBoundingClientRect();
+  setClaim(key,val);
+  if(was){ sfx('click'); return; }
+  if(key==='min'){ const days=(myClaim().min||[]).filter(Boolean).length; sfx('check'); buzz(15); if(days===5){ flyCoins(r,2); toast('Пять дней из семи! '+doneLine(2)); } return; }
+  flyCoins(r,moves); buzz([25,40,25]); toast(doneLine(moves));
+}
+function flyCoins(r,n){
+  sfx('coin'); const target=$('#minicnt'); if(!target||reduceMotion()) return;
+  const t=target.getBoundingClientRect(), cnt=Math.max(1,Math.min(6,n||1));
+  for(let i=0;i<cnt;i++){
+    const c=document.createElement('i'); c.className='coin'; document.body.appendChild(c);
+    const x0=r.left+r.width/2-9, y0=r.top+r.height/2-9, x1=t.left+t.width/2-9, y1=t.top+t.height/2-9;
+    c.animate([{transform:`translate(${x0}px,${y0}px) scale(1)`,opacity:1},{transform:`translate(${(x0+x1)/2+(i-cnt/2)*14}px,${Math.min(y0,y1)-60}px) scale(1.3)`,opacity:1,offset:.45},{transform:`translate(${x1}px,${y1}px) scale(.6)`,opacity:.2}],
+      {duration:750,delay:i*80,easing:'ease-in',fill:'forwards'}).onfinish=()=>{ c.remove(); if(i===cnt-1){ const m=$('#minicnt'); if(m){ m.classList.remove('bump'); void m.offsetWidth; m.classList.add('bump'); } sfx('check'); } };
+  }
+}
+function taskCard(o){
+  const st=o.confirmed?'ok':o.done?'wait':'';
+  return `<div class="task ${o.confirmed?'done':''}${o.isNew?' new':''}">
+    <div>${o.isNew?'<div class="newbadge">Новое от куратора</div>':''}${o.kind?`<div class="kind">${esc(o.kind)}</div>`:''}
+      <div class="t">${o.title}</div><div class="d">${o.desc||''}</div>${o.movesText?`<div class="mv">${o.movesText}</div>`:''}
+      <div class="st ${st}">${o.stText!=null?o.stText:o.confirmed?'Подтверждено куратором ✓':o.done?'Ждёт подтверждения куратора':''}</div>${o.extra||''}</div>
+    ${o.key?`<button class="pbtn small ${o.done||o.confirmed?'dark':''}" ${o.confirmed||o.dis?'disabled':''} onclick="markDone(this,'${o.key}',${o.val==null?'null':`'${o.val}'`},${o.moves||0})">${o.done||o.confirmed?'Готово ✓':'Выполнено'}</button>`:''}</div>`;
+}
 function vTasks(){
   const h=H(ME); if(!h) return '';
-  const d=D(h), c=claimOf(h)||{task:false,refl:false,min:[0,0,0,0,0,0,0],sphere:false,trap:false};
+  const d=D(h), c=claimOf(h)||{task:false,refl:false,min:[0,0,0,0,0,0,0]};
   const cls=CLASSES[clsOf(h)]||{}, sph=SPHERES[cls.sphere]||{};
-  const meeting=S.phase==='resolve';
-  const task=(key,title,desc,done,confirmed,extra='')=>`<div class="task ${confirmed?'done':''}"><div><div class="t">${title}</div><div class="d">${desc}</div>
-    <div class="st ${confirmed?'ok':done?'wait':''}">${confirmed?'Подтверждено куратором':done?'Ждёт подтверждения куратора':''}</div>${extra}</div>
-    ${key?`<button class="btn small ${done||confirmed?'on':''}" ${confirmed||meeting?'disabled':''} onclick="setClaim('${key}')">${done||confirmed?'Готово ✓':'Выполнено'}</button>`:''}</div>`;
+  const meeting=S.phase==='resolve', {total}=calcDelta(h), pend=pendingFor(h);
+  const seen=lsGet('gnu_tseen_'+ME,[]);
+  const mine=tasksFor(h), active=mine.filter(t=>tActive(t,h)), past=mine.filter(t=>!tActive(t,h));
+  const pers=active.map(t=>{ const st=tStatus(t,h), n=Number(t.moves)||0;
+    return taskCard({key:'personal',val:t.id,title:esc(t.title),desc:esc(t.desc||''),moves:n,kind:TASK_KINDS[t.kind]||'Задание',isNew:!seen.includes(t.id),
+      movesText:`${n?'+'+n+' '+plural(n,'ход','хода','ходов'):'без ходов'}${t.due?` · до ${fmtDue(t.due)}`:''}`,
+      done:st==='claimed',confirmed:st==='ok',dis:meeting&&st!=='claimed',stText:st==='no'?'Куратор пока не засчитал — поговорите на встрече':null}); }).join('');
+  const dl=reflDeadline(), late=Date.now()>dl;
   const dayNames=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
-  const daysBtns=`<div class="days">${dayNames.map((n,i)=>`<button aria-pressed="${!!(c.min||[])[i]}" ${d.minimum||meeting?'disabled':''} onclick="setClaim('min',${i})">${n}</button>`).join('')}</div>`;
+  const daysBtns=`<div class="days">${dayNames.map((n,i)=>`<button aria-pressed="${!!(c.min||[])[i]}" ${d.minimum||meeting?'disabled':''} onclick="markDone(this,'min',${i},0)">${n}</button>`).join('')}</div>`;
   const minDays=(c.min||[]).filter(Boolean).length;
-  return `<h2>Задания недели ${S.week}</h2>
-  ${task('task','Задание потока','+5 ходов',c.task,d.task)}
-  ${task('refl','Рефлексия до вторника 22:00','+2 хода вовремя. Не сдана: −10',c.refl,d.refl==='ontime'||d.refl==='late', d.refl==='late'?'<div class="st">Засчитана с опозданием: 0 ходов</div>':d.refl==='none'?'<div class="st" style="color:#ff8f86">Не сдана: −10</div>':'')}
-  ${task('', `Минимум дня · ${esc(cls.name||'')}`, `Небольшие действия в сфере «${esc(sph.name||'')}». Отмечай дни: 5 из 7 дают +2 хода. Сейчас ${minDays} из 7.`, minDays>=5, d.minimum, daysBtns)}
-  ${h.sphereTask?task('sphere',`Карта сферы «${esc(SPHERES[h.sphereTask].name)}»`,`Вызов с карты, которую ты вытянул на встрече. ${h.sphereTask===cls.sphere?'Своя сфера: +4':'+2'} хода`,c.sphere,!!d.sphere):''}
-  ${h.trap?task('trap','Вызов ловушки','Выполни, и не спустишься назад',c.trap,d.trapDone):''}
-  <div class="task"><div><div class="t">Испытание шага «${esc(STEPS[S.week]?.name||'')}»</div><div class="d">${esc(STEPS[S.week]?.task||'')}</div><div class="st muted">Без ходов</div></div></div>
-  <div class="task"><div><div class="t">Встреча</div><div class="d">+1 ход. Отмечает куратор на встрече</div><div class="st ${d.present?'ok':''}">${d.present?'Подтверждено':''}</div></div></div>`;
+  setTimeout(markTasksSeen,1500);
+  return `<div class="minicnt" id="minicnt"><div><b>${sign(total)}</b> ${plural(total,'ход','хода','ходов')} к встрече</div>${pend.sum?`<span>ещё +${pend.sum} ждут подтверждения</span>`:'<span>отмечай выполнение вовремя</span>'}</div>
+  ${meeting?'<div class="panel gold">Идёт встреча. Новые задания откроются после хода Тьмы.</div>':''}
+  ${pers?`<h2>Личные задания</h2>${pers}`:''}
+  <h2>Задания недели ${S.week}</h2>
+  ${taskCard({key:'task',title:'Задание потока',desc:'Главное задание недели от Наставника.',moves:5,movesText:'+5 ходов',done:c.task,confirmed:d.task,dis:meeting})}
+  ${taskCard({key:'refl',title:'Рефлексия',desc:`Сдай до вторника 22:00. Не сдана — −10 и лишний шаг Тьмы.${late&&!c.refl?' Срок прошёл, но сдать всё равно стоит.':''}`,moves:2,movesText:`+2 хода · ${late?'срок прошёл':'осталось '+untilText(dl-Date.now())}`,done:c.refl,confirmed:d.refl==='ontime'||d.refl==='late',dis:meeting,
+     extra:d.refl==='late'?'<div class="st">Засчитана с опозданием: 0 ходов</div>':d.refl==='none'?'<div class="st minus">Не сдана: −10</div>':''})}
+  ${taskCard({title:`Минимум дня · ${esc(cls.name||'')}`,desc:`Небольшие действия в сфере «${esc(sph.name||'')}». Отмечай дни: 5 из 7 дают +2 хода.`,movesText:`Сейчас ${minDays} из 7`,done:minDays>=5,confirmed:d.minimum,extra:daysBtns})}
+  ${taskCard({title:`Испытание шага «${esc(STEPS[S.week]?.name||'')}»`,desc:esc(STEPS[S.week]?.task||''),movesText:'без ходов',stText:''})}
+  ${taskCard({title:'Встреча',desc:'Приходи на встречу. Отмечает куратор.',movesText:'+1 ход',confirmed:d.present,stText:d.present?'Подтверждено ✓':''})}
+  ${past.length?`<details class="past"><summary>Прошлые личные задания (${past.length})</summary>${past.map(t=>`<div class="event${tStatus(t,h)==='failed'?' done':''}">${esc(t.title)} — ${tStatus(t,h)==='paid'?`засчитано${Number(t.moves)?' +'+t.moves:''}`:'не выполнено'}</div>`).join('')}</details>`:''}`;
+}
+
+/* ---------- Яра выбегает в угол экрана ---------- */
+function yaraPop(text,key,onTap){
+  $('#yarapop')?.remove();
+  const el=document.createElement('div'); el.id='yarapop';
+  el.innerHTML=`<div class="yp-bub">${esc(text)}</div><div class="yara yp"><img class="tail" src="${imgSrc('yara_tail.webp')}" alt=""><img src="${imgSrc('yara.webp')}" alt="Яра"></div>`;
+  el.onclick=()=>{ el.remove(); onTap&&onTap(); };
+  document.body.appendChild(el); sfx('bark'); buzz(40);
+  speak(key||'yara_1',text,'yara');
+  setTimeout(()=>el.classList.add('out'),7000); setTimeout(()=>el.remove(),7600);
+}
+function checkNewTasks(){
+  const n=unseenTasks(); if(!n.length) return false;
+  const shown=lsGet('gnu_tpop_'+ME,[]); const fresh=n.filter(t=>!shown.includes(t.id)); if(!fresh.length) return false;
+  lsSet('gnu_tpop_'+ME,[...shown,...fresh.map(t=>t.id)].slice(-200));
+  render(); sfx('task'); setTimeout(()=>yaraPop('Гав! У тебя новое задание.','yara_task',()=>go('tasks')),300);
+  return true;
+}
+
+/* ---------- куратор: личные задания ---------- */
+let TF=null;
+function dueLocal(t){ return tzDate(t).toISOString().slice(0,16); }
+function dueISO(v){ const t=Date.parse(v+':00+07:00'); return t?new Date(t).toISOString():''; }
+function tfDefault(){ return {kind:'custom',toType:'hero',toId:S.heroes[0]?.id||'',sphere:'delo',prisoner:'',title:'',desc:'',moves:0,due:dueLocal(nextMeeting(Date.now()+DAY)),editId:''}; }
+function sphereMoves(h,sp){ return CLASSES[clsOf(h||{})]?.sphere===sp?4:2; }
+const TPL={
+  custom:{title:'',desc:''},
+  sphere:{title:'Карта сферы',desc:'Вызов с карты, которую ты вытянул на встрече. Выполни до следующей встречи.'},
+  trap:{title:'Вызов ловушки',desc:'Вызов, который тебе дала группа. Выполнишь до встречи — останешься на месте. Не выполнишь — спустишься назад.'},
+  guard:{title:'Испытание Стража порогов',desc:'Личное испытание Наставника. Выполнишь — потолок пробит, а накопленные ходы пойдут в путь.'},
+  help:{title:'Задание помощи',desc:'Твой союзник в плену у Тьмы. Выполните задание помощи — и он снова в пути.'},
+};
+function tfTemplate(kind){
+  const keep=TF||tfDefault(); TF=Object.assign(tfDefault(),{kind,toId:keep.toId,title:TPL[kind].title,desc:TPL[kind].desc});
+  if(kind==='sphere') TF.title=`Карта сферы «${SPHERES[TF.sphere].name}»`;
+  if(kind==='help'){ const caps=S.heroes.filter(h=>h.captured); TF.prisoner=caps[0]?.id||''; TF.toType='triple'; TF.toId=tripleOf(H(TF.prisoner)||{})||'fire'; if(TF.prisoner) TF.title='Задание помощи: вытащить '+firstName(H(TF.prisoner)); }
+  render();
+}
+function tfSet(k,v){ TF[k]=v;
+  if(k==='prisoner'){ TF.toType='triple'; TF.toId=tripleOf(H(v)||{})||TF.toId; TF.title='Задание помощи: вытащить '+firstName(H(v)||{name:''}); }
+  if(k==='toType') TF.toId=v==='hero'?(S.heroes[0]?.id||''):v==='triple'?'fire':'';
+  if(k==='sphere') TF.title=`Карта сферы «${SPHERES[v].name}»`;
+  render();
+}
+function newTaskObj(){ return {id:Math.random().toString(36).slice(2,9),created:new Date().toISOString(),week:S.week,status:{}}; }
+function quickTask(kind,heroId,sphere){
+  const h=H(heroId); if(!h) return;
+  if((S.tasks||[]).some(t=>t.kind===kind&&(kind==='help'?t.prisoner===heroId:t.to.id===heroId)&&taskTo(t).some(x=>tActive(t,x)))) return toast('Такое задание уже есть');
+  const t=Object.assign(newTaskObj(),{kind,title:TPL[kind].title,desc:TPL[kind].desc,moves:0,due:new Date(nextMeeting(Date.now()+DAY)).toISOString()});
+  if(kind==='help'){ t.prisoner=heroId; t.to={type:'triple',id:tripleOf(h)||h.triple}; t.title='Задание помощи: вытащить '+firstName(h); }
+  else t.to={type:'hero',id:heroId};
+  if(kind==='sphere'){ t.sphere=sphere; t.title=`Карта сферы «${SPHERES[sphere].name}»`; t.moves=sphereMoves(h,sphere); }
+  S.tasks=S.tasks||[]; S.tasks.push(t); save(); render(); toast('Задание добавлено: '+t.title);
+}
+function saveTask(){
+  const f=TF; if(!f.title.trim()) return toast('Впиши название');
+  const to={type:f.toType,id:f.toType==='all'?'':f.toId}; if(f.toType!=='all'&&!to.id) return toast('Выбери, кому');
+  let moves=Math.max(0,parseInt(f.moves)||0);
+  if(f.kind==='sphere'){ if(f.toType!=='hero') return toast('Карта сферы — для одного героя'); moves=sphereMoves(H(to.id),f.sphere); }
+  if(f.kind==='help'&&!f.prisoner) return toast('Выбери пленника');
+  S.tasks=S.tasks||[];
+  const old=S.tasks.find(t=>t.id===f.editId);
+  const t=Object.assign(old||newTaskObj(),{kind:f.kind,to,title:f.title.trim().slice(0,120),desc:f.desc.trim().slice(0,800),moves,due:dueISO(f.due)});
+  if(f.kind==='sphere') t.sphere=f.sphere; else delete t.sphere;
+  if(f.kind==='help') t.prisoner=f.prisoner; else delete t.prisoner;
+  if(!old) S.tasks.push(t);
+  TF=tfDefault(); save(); render(); toast(old?'Задание обновлено':'Задание добавлено');
+}
+function editTask(id){ const t=S.tasks.find(x=>x.id===id); if(!t) return; TF={kind:t.kind,toType:t.to.type,toId:t.to.id,sphere:t.sphere||'delo',prisoner:t.prisoner||'',title:t.title,desc:t.desc||'',moves:t.moves||0,due:t.due?dueLocal(Date.parse(t.due)):dueLocal(nextMeeting()),editId:t.id}; render(); window.scrollTo(0,0); }
+function delTask(id){ if(!confirm('Удалить задание?')) return; S.tasks=S.tasks.filter(t=>t.id!==id); save(); render(); }
+function setTaskSt(id,hid,v){ const t=S.tasks.find(x=>x.id===id); if(!t) return; t.status=t.status||{}; if(v) t.status[hid]=v; else delete t.status[hid]; save(true); render(); }
+function toLabel(t){ return t.to.type==='hero'?esc(nameOf(H(t.to.id)||{})):t.to.type==='triple'?'тройка '+(TRIPLES[t.to.id]?.name||''):'все герои'; }
+const ST_TEXT={open:'не отмечено',claimed:'отметил(а) — подтверди',ok:'подтверждено',no:'не засчитано',paid:'засчитано на встрече',failed:'не выполнено'};
+function cTasks(){
+  if(!TF) TF=tfDefault();
+  const f=TF, heroOpt=sel=>S.heroes.map(h=>`<option value="${h.id}" ${sel===h.id?'selected':''}>${esc(nameOf(h))}</option>`).join('');
+  const target=f.toType==='hero'?`<select class="t" onchange="tfSet('toId',this.value)">${heroOpt(f.toId)}</select>`:f.toType==='triple'?`<select class="t" onchange="tfSet('toId',this.value)">${TRIPLE_ORDER.map(k=>`<option value="${k}" ${f.toId===k?'selected':''}>${TRIPLES[k].name}</option>`).join('')}</select>`:'';
+  const sphH=f.kind==='sphere'&&f.toType==='hero'?H(f.toId):null;
+  const hint={trap:'Подтверждено — герой не падает. Не подтверждено к встрече — падает.',guard:'Подтверждено — пробой потолка засчитается при «Двигать героев».',help:'Подтверждено хотя бы у одного из тройки — пленник освобождается при «Двигать героев».'}[f.kind];
+  const form=`<div class="panel gold"><b>${f.editId?'Изменить задание':'Добавить задание'}</b>
+    <div class="row" style="margin-top:10px">${[['sphere','Карта сферы'],['trap','Вызов ловушки'],['guard','Испытание Стража'],['help','Задание помощи'],['custom','Обычное']].map(([k,l])=>`<button class="tog" aria-pressed="${f.kind===k}" onclick="tfTemplate('${k}')">${l}</button>`).join('')}</div>
+    ${f.kind==='help'?`<label class="f">Кто в плену</label><select class="t" onchange="tfSet('prisoner',this.value)"><option value="">—</option>${S.heroes.filter(h=>h.captured||h.id===f.prisoner).map(h=>`<option value="${h.id}" ${f.prisoner===h.id?'selected':''}>${esc(nameOf(h))}</option>`).join('')}</select>`:''}
+    <label class="f">Кому</label><div class="row"><select class="t" style="flex:1" onchange="tfSet('toType',this.value)">${[['hero','Одному герою'],['triple','Тройке'],['all','Всем']].map(([k,l])=>`<option value="${k}" ${f.toType===k?'selected':''}>${l}</option>`).join('')}</select><div style="flex:1">${target}</div></div>
+    ${f.kind==='sphere'?`<label class="f">Сфера карты</label><select class="t" onchange="tfSet('sphere',this.value)">${Object.entries(SPHERES).map(([k,sp])=>`<option value="${k}" ${f.sphere===k?'selected':''}>${sp.name}</option>`).join('')}</select>
+      <p class="muted" style="font-size:14px;margin:6px 0 0">${sphH?`Ходы поставятся сами: +${sphereMoves(sphH,f.sphere)} (${sphereMoves(sphH,f.sphere)===4?'сфера класса героя':'не его сфера'})`:'Карта сферы — для одного героя'}</p>`:''}
+    <label class="f">Название</label><input class="t" value="${esc(f.title)}" oninput="TF.title=this.value">
+    <label class="f">Описание</label><textarea class="t" rows="3" oninput="TF.desc=this.value">${esc(f.desc)}</textarea>
+    <div class="row"><div style="flex:1;min-width:90px"><label class="f">Ходы</label><input class="t" type="number" min="0" value="${f.kind==='sphere'?(sphH?sphereMoves(sphH,f.sphere):''):esc(f.moves)}" ${f.kind==='sphere'?'disabled':''} oninput="TF.moves=this.value"></div>
+      <div style="flex:2;min-width:180px"><label class="f">Срок (по Новосибирску)</label><input class="t" type="datetime-local" value="${esc(f.due)}" oninput="TF.due=this.value"></div></div>
+    ${hint?`<p class="muted" style="font-size:14px">${hint}</p>`:''}
+    <div class="row" style="margin-top:12px"><button class="btn" onclick="saveTask()">${f.editId?'Сохранить':'Добавить задание'}</button>${f.editId?'<button class="btn ghost" onclick="TF=tfDefault();render()">Отмена</button>':''}</div></div>`;
+  const list=(S.tasks||[]).slice().reverse().filter(t=>taskTo(t).some(h=>tActive(t,h))||(t.week>=S.week-1));
+  const rows=list.map(t=>{ const rec=taskTo(t);
+    return `<div class="event"><div style="display:flex;justify-content:space-between;gap:8px"><div><span class="muted" style="font-size:13px">${esc(TASK_KINDS[t.kind]||'Задание')} · ${toLabel(t)} · ${Number(t.moves)?'+'+t.moves:'0 ходов'}${t.due?' · до '+fmtDue(t.due):''}</span><br><b>${esc(t.title)}</b></div>
+      <div style="white-space:nowrap"><button class="linkbtn" onclick="editTask('${t.id}')">править</button> <button class="linkbtn" onclick="delTask('${t.id}')">удалить</button></div></div>
+      ${rec.map(h=>{ const st=tStatus(t,h); return `<div class="row" style="margin-top:6px;font-size:15px"><span style="flex:1">${esc(nameOf(h))}: <span class="${st==='ok'||st==='paid'?'plus':st==='no'||st==='failed'?'minus':st==='claimed'?'':'muted'}">${ST_TEXT[st]}</span></span>
+        ${st==='paid'||st==='failed'?'':`<button class="btn small" onclick="setTaskSt('${t.id}','${h.id}','ok')" aria-label="Подтвердить">✓</button><button class="btn small ghost" onclick="setTaskSt('${t.id}','${h.id}','no')" aria-label="Не засчитано">✗</button>${st==='ok'||st==='no'?`<button class="linkbtn" onclick="setTaskSt('${t.id}','${h.id}','')">сброс</button>`:''}`}</div>`; }).join('')}</div>`; }).join('');
+  return `<p class="muted">Личные задания появятся у героев с отметкой «Новое от куратора». Подтверждённые задания сами учтутся при «Двигать героев».</p>
+   ${form}<div class="row" style="margin:6px 0 10px"><button class="btn ghost small" onclick="load()">Обновить отметки</button></div><h2>Задания</h2>${rows||'<p class="muted">Пока заданий нет.</p>'}`;
 }
 
 /* ---------- клан ---------- */
@@ -1762,28 +1966,26 @@ function loginDlg(){
     catch(e){ toast('Нет связи с таблицей'); }
   };
 }
-const CT=[['week','Неделя'],['resolve','Встреча'],['powers','Силы'],['prof','Анкеты'],['ann','Объявления'],['setup','Герои'],['map','Карта'],['over','Обзор'],['data','Данные']];
+const CT=[['week','Неделя'],['resolve','Встреча'],['powers','Силы'],['prof','Анкеты'],['tasks','Задания'],['ann','Объявления'],['setup','Герои'],['map','Карта'],['over','Обзор'],['data','Данные']];
 function vCur(){
-  const sub=({week:cWeek,resolve:cResolve,powers:cPowers,prof:cProfiles,ann:cAnnounce,setup:cSetup,map:cMap,over:vWeek,data:cData}[ctab]||cWeek)();
+  const sub=({week:cWeek,resolve:cResolve,powers:cPowers,prof:cProfiles,tasks:cTasks,ann:cAnnounce,setup:cSetup,map:cMap,over:vWeek,data:cData}[ctab]||cWeek)();
   return `<h2>Куратор</h2><div class="subtabs">${CT.map(([k,l])=>`<button aria-current="${ctab===k}" onclick="ctab='${k}';render()">${l}</button>`).join('')}</div>${sub}`;
 }
 function tog(label,pressed,on,bad){ return `<button class="tog${bad?' bad':''}" aria-pressed="${!!pressed}" onclick="${on}">${label}</button>`; }
 function setD(id,key,val){ const d=D(H(id)); d[key]=(d[key]===val&&typeof val!=='boolean')?'':val; save(true); render(); }
 function flip(id,key){ const d=D(H(id)); d[key]=!d[key]; save(true); render(); }
 function claimText(h){
-  const c=claimOf(h); if(!c) return '';
-  const a=[]; const days=(c.min||[]).filter(Boolean).length;
+  const c=claimOf(h)||{min:[]};
+  const a=tasksFor(h).filter(t=>tStatus(t,h)==='claimed').map(t=>`«${t.title}»`); const days=(c.min||[]).filter(Boolean).length;
   if(c.task) a.push('задание'); if(c.refl) a.push('рефлексия'); if(days) a.push(`минимум ${days}/7`);
-  if(c.sphere&&h.sphereTask) a.push(`вызов сферы «${SPHERES[h.sphereTask].name}»`); if(c.trap&&h.trap) a.push('вызов ловушки');
   return a.length?`Отметил сам: ${a.join(', ')}`:'';
 }
 function acceptClaims(id){
-  const h=H(id), c=claimOf(h), d=D(h); if(!c) return;
+  const h=H(id), c=claimOf(h)||{}, d=D(h);
+  tasksFor(h).forEach(t=>{ if(tStatus(t,h)==='claimed'){ t.status=t.status||{}; t.status[h.id]='ok'; } });
   if(c.task) d.task=true;
   if(c.refl&&!d.refl) d.refl='ontime';
   if((c.min||[]).filter(Boolean).length>=5) d.minimum=true;
-  if(c.sphere&&h.sphereTask) d.sphere=h.sphereTask;
-  if(c.trap&&h.trap) d.trapDone=true;
   save(true); render();
 }
 function cWeek(){
@@ -1797,7 +1999,7 @@ function cWeek(){
     return `<div class="entry" style="--pc:${classColor(h)}">
       <div class="hd"><b>${esc(h.name)}</b><span class="sum ${total>0?'plus':total<0?'minus':''}">${h.captured?'в плену ':''}${sign(total)}</span></div>
       ${ct?`<div class="claims">${esc(ct)} <button class="btn small" onclick="acceptClaims('${h.id}')">Подтвердить</button></div>`:''}
-      ${h.sphereTask?`<div class="muted" style="font-size:14px">Карта сферы на неделю: ${SPHERES[h.sphereTask].name}</div>`:''}
+      ${tasksFor(h).filter(t=>tActive(t,h)).map(t=>`<div class="muted" style="font-size:14px">${esc(TASK_KINDS[t.kind]||'Задание')}: ${esc(t.title)} — ${({ok:'подтверждено ✓',no:'не засчитано',claimed:'отметил, ждёт тебя',open:'не отмечено'})[tStatus(t,h)]}</div>`).join('')}
       <div class="opts">
         ${tog('Задание +5',d.task,`flip('${h.id}','task')`)}
         ${tog('Рефлексия вовремя',d.refl==='ontime',`setD('${h.id}','refl','ontime')`)}
@@ -1808,9 +2010,8 @@ function cWeek(){
         ${tog('Самый ценный',S.draft._mvp===h.id,`S.draft._mvp=S.draft._mvp==='${h.id}'?'':'${h.id}';save(true);render()`)}
         ${h.trap?tog('Вызов ловушки выполнен',d.trapDone,`flip('${h.id}','trapDone')`):''}
       </div>
-      <div class="row" style="margin-top:8px">
-        <select class="t" style="flex:2;min-width:180px" onchange="D(H('${h.id}')).sphere=this.value;save(true);render()" aria-label="Вызов сферы"><option value="">Вызов сферы: нет</option>${sp}</select>
-        <input class="t" style="flex:1;min-width:90px" type="number" value="${Number(d.adjust)||0}" onchange="D(H('${h.id}')).adjust=Number(this.value)||0;save(true);render()" aria-label="Поправка ходов">
+      <div class="row" style="margin-top:8px"><label class="muted" style="font-size:14px">Поправка ходов</label>
+        <input class="t" style="width:100px" type="number" value="${Number(d.adjust)||0}" onchange="D(H('${h.id}')).adjust=Number(this.value)||0;save(true);render()" aria-label="Поправка ходов">
       </div></div>`;
   }).join('');
   return `<p class="muted">Отметки недели ${S.week}. Участники видят у себя накопленные ходы, но двигаются только когда ты нажмёшь «Двигать героев» на встрече.</p>
@@ -1825,7 +2026,9 @@ function cResolve(){
   const evs=S.events.map(e=>{
     let act='';
     if(e.type==='bridge'&&!e.done) act=`<div class="row" style="margin-top:6px"><button class="btn small" onclick="resolveBridge('${e.id}',true)">Условие выполнено</button><button class="btn small ghost" onclick="resolveBridge('${e.id}',false)">Нет</button></div>`;
-    if(e.type==='ceiling'&&!e.done&&H(e.hero)?.atCeiling) act=`<div class="row" style="margin-top:6px"><button class="btn small" onclick="breakCeiling('${e.hero}')">Пробой засчитан</button></div>`;
+    if(e.type==='ceiling'&&!e.done&&H(e.hero)?.atCeiling) act=`<div class="row" style="margin-top:6px"><button class="btn small" onclick="breakCeiling('${e.hero}')">Пробой засчитан</button><button class="btn small ghost" onclick="quickTask('guard','${e.hero}')">В задания: испытание Стража</button></div>`;
+    if(e.type==='sphere') act=`<div class="row" style="margin-top:6px"><button class="btn small ghost" onclick="quickTask('sphere','${e.hero}','${e.sphere}')">В задания: карта сферы</button></div>`;
+    if(e.type==='trap') act=`<div class="row" style="margin-top:6px"><button class="btn small ghost" onclick="quickTask('trap','${e.hero}')">В задания: вызов ловушки</button></div>`;
     return `<div class="event${e.done?' done':''}">${esc(e.text)}${act}</div>`;
   }).join('');
   const caps=S.heroes.filter(h=>h.captured);
@@ -1834,7 +2037,7 @@ function cResolve(){
   ${evs||'<p class="muted">Событий нет.</p>'}
   ${ceil.length?`<h2>Ждут пробоя</h2>${ceil.map(h=>`<div class="event">${esc(h.name)} у потолка ${h.atCeiling}<div class="row" style="margin-top:6px"><button class="btn small" onclick="breakCeiling('${h.id}')">Пробой засчитан</button></div></div>`).join('')}`:''}
   <h2>Пленники</h2>${caps.length?caps.map(h=>`<div class="event">${esc(h.name)} в плену, копит ${h.held||0}
-    <div class="row" style="margin-top:6px"><button class="btn small" onclick="release('${h.id}','triple')">Тройка выполнила задание</button><button class="btn small ghost" onclick="release('${h.id}','lantern')" ${S.lanterns?'':'disabled'}>Фонарь (${S.lanterns})</button></div></div>`).join(''):'<p class="muted">Никого.</p>'}
+    <div class="row" style="margin-top:6px"><button class="btn small" onclick="release('${h.id}','triple')">Тройка выполнила задание</button><button class="btn small ghost" onclick="release('${h.id}','lantern')" ${S.lanterns?'':'disabled'}>Фонарь (${S.lanterns})</button><button class="btn small ghost" onclick="quickTask('help','${h.id}')">Задание помощи тройке</button></div></div>`).join(''):'<p class="muted">Никого.</p>'}
   ${S.phase==='resolve'?`<div class="row" style="margin-top:16px"><button class="btn" onclick="darkMove()">Ход Тьмы и закрыть неделю</button></div>`:''}`;
 }
 function cPowers(){
