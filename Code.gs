@@ -24,12 +24,21 @@ function doGet(e) {
     const profiles = loadProfiles_();
     const out = { ok: true, state: publicState_(state, profiles) };
     const hero = heroByCode_(state, p.code);
-    if (out.state) out.state.tasks = hero ? tasksForHero_(state, hero, profiles) : [];
+    if (out.state) {
+      out.state.tasks = hero ? tasksForHero_(state, hero, profiles) : [];
+      // только факт «отметил задания на этой неделе», без чужих ходов
+      const claims = loadClaims_();
+      (out.state.heroes || []).forEach(h => {
+        const c = claims[h.id];
+        h.marked = !!(c && c.week === state.week && (c.task || c.refl || (c.min || []).some(Boolean) || Object.keys(c.personal || {}).length));
+      });
+    }
     if (hero) {
       out.me = hero.id;
       const c = loadClaims_()[hero.id];
       out.claims = c ? { [hero.id]: c } : {};
       out.profile = profiles[hero.id] || null;
+      out.thanks = thanksFor_(hero.id);
     }
     return json_(out);
   }
@@ -124,6 +133,28 @@ function doPost(e) {
       return json_({ ok: true });
     }
 
+    if (body.action === 'thanks') {
+      const state = loadState_();
+      const hero = heroByCode_(state, body.code);
+      if (!hero) return json_({ ok: false, error: 'Ссылка героя не найдена.' });
+      const to = (state.heroes || []).find(h => h.id === body.to);
+      if (!to || to.id === hero.id) return json_({ ok: false, error: 'Не нашёл, кого благодарить' });
+      const lock = LockService.getScriptLock();
+      lock.waitLock(20000);
+      try {
+        const sh = thanksSheet_();
+        const last = sh.getLastRow();
+        const day = 20 * 3600 * 1000;
+        if (last > 1) {
+          const recent = sh.getRange(Math.max(2, last - 300), 1, Math.min(last - 1, 301), 6).getValues();
+          if (recent.some(r => r[4] === hero.id && r[5] === to.id && Date.now() - new Date(r[0]).getTime() < day))
+            return json_({ ok: false, error: 'Сегодня ты уже благодарил этого героя' });
+        }
+        sh.appendRow([new Date(), hero.name, to.name, String(body.text || '').slice(0, 200), hero.id, to.id]);
+      } finally { lock.releaseLock(); }
+      return json_({ ok: true });
+    }
+
     if (body.action === 'save') {
       if (!checkPin_(body.pin)) return json_({ ok: false, error: 'Неверный PIN куратора' });
       const lock = LockService.getScriptLock();
@@ -201,6 +232,26 @@ function saveRow_(name, heroId, obj) {
   const i = ids.indexOf(heroId);
   const row = i >= 0 ? i + 1 : last + 1;
   sh.getRange(row, 1, 1, 2).setNumberFormat('@').setValues([[heroId, JSON.stringify(obj)]]);
+}
+
+/* «Сказать спасибо»: лист «Спасибо», его удобно читать прямо в таблице */
+function thanksSheet_() {
+  const sh = sheet_('Спасибо');
+  if (!sh.getLastRow()) {
+    sh.appendRow(['Когда', 'От кого', 'Кому', 'Слова', 'from', 'to']);
+    sh.getRange(1, 1, 1, 6).setFontWeight('bold').setBackground('#132150').setFontColor('#e9b84c');
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+function thanksFor_(heroId) {
+  const sh = thanksSheet_();
+  const last = sh.getLastRow();
+  if (last < 2) return [];
+  return sh.getRange(2, 1, last - 1, 6).getValues()
+    .filter(r => r[5] === heroId)
+    .slice(-100)
+    .map(r => ({ at: new Date(r[0]).toISOString(), from: r[4], text: String(r[3] || '') }));
 }
 
 function checkPin_(pin) {
