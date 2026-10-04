@@ -313,6 +313,21 @@ details.past{margin-top:16px}details.past summary{cursor:pointer;color:var(--mut
 @keyframes ypOut{to{transform:translateX(130%)}}
 #yarapop .yara.yp{position:relative;right:auto;bottom:auto;height:120px;animation:none}
 .yp-bub{background:var(--parch);color:#1d1400;padding:10px 12px;font-size:16px;max-width:200px;box-shadow:0 0 0 3px #1d1400,0 0 0 6px var(--gold);margin-bottom:60px}
+.moods{display:flex;justify-content:space-between;gap:6px;margin:6px 0 4px}
+.moods button{flex:1;aspect-ratio:1;max-width:58px;display:grid;place-items:center;background:#0b1233;border:2px solid #26346f;cursor:pointer;padding:0;transition:transform .12s}
+.moods button[aria-pressed="true"]{border-color:var(--gold);background:#1c2766;box-shadow:0 0 12px #ffd27a77;transform:translateY(-3px)}
+.moodlbl{text-align:center;font-family:var(--pixel);font-size:8px;color:var(--gold);margin:4px 0 10px}
+label.chk{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:16px;cursor:pointer}
+label.chk input{width:22px;height:22px;accent-color:var(--gold)}
+.seg{display:flex;gap:6px;margin:18px 0 10px}
+.seg button{flex:1;background:#0d1640;border:2px solid #26346f;padding:9px 4px;font-size:14px;cursor:pointer}
+.seg button[aria-current="true"]{border-color:var(--gold);color:var(--gold-hi);background:#1d2a6a}
+.dday{margin-bottom:8px}
+.dd-h{display:flex;align-items:center;gap:8px;font-family:var(--pixel);font-size:8px;color:var(--gold);margin:14px 0 8px;text-transform:uppercase;line-height:1.6}
+.entryd.disc-on{border-left-color:var(--gold)}
+.disc{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px dashed #a9822f66;font-size:15px}
+.disc:last-child{border-bottom:0}
+.disc .linkbtn{white-space:nowrap;flex:none}
 .mates{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .mate{background:#0d1640;border:2px solid #26346f;padding:8px 4px;text-align:center;font-size:14px}
 .mate .mini{height:72px}
@@ -1573,6 +1588,7 @@ function vHero(){
     <div class="timer"><div class="v">${untilText(mt-now)}</div><div class="k">до встречи<br>${fmtMeeting(mt)}</div></div>
     <div class="timer${!reflOk&&dl-now<30*HOUR&&dl>now?' hot':''}"><div class="v">${reflOk?'Сдана ✓':dl>now?untilText(dl-now):'Срок прошёл'}</div><div class="k">рефлексия<br>до вт 22:00</div></div>
   </div>
+  ${discussList().length&&mt-now<2*DAY?`<div class="panel gold" style="margin-top:12px">📜 На встречу из дневника: <b>${discussList().length}</b> ${plural(discussList().length,'тема','темы','тем')} — <button class="linkbtn" style="color:var(--gold)" onclick="diaryView='discuss';go('diary')">открыть</button></div>`:''}
   ${announceBlock()}
   <h2>После прошлой встречи</h2>${status}
   ${S.recap&&S.recap[h.id]?`<button class="pbtn dark wide" style="margin-top:10px" onclick="showRecap(true)">Итоги встречи · неделя ${S.recap[h.id].week}</button>`:''}
@@ -2130,8 +2146,15 @@ function cMap(){ return vMap(); }
    Дневник хранится только на телефоне участника. На сервер он не уходит,
    куратор его не видит.
    ===================================================================== */
-function todayKey(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function localKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function todayKey(){ return localKey(new Date()); }
 function hello(){ const h=new Date().getHours(); return h<5?'Доброй ночи':h<12?'Доброе утро':h<18?'Добрый день':'Добрый вечер'; }
+function nskDay(){ return tzDate(Date.now()).getUTCDay(); } // 0 — воскресенье, по Новосибирску
+function reflReminder(){
+  const dl=reflDeadline(), left=dl-Date.now(), wd=nskDay();
+  if((wd===1||wd===2)&&left>0) return `Рефлексия — до вторника 22:00, осталось ${untilText(left)}. Твои мысли за неделю стоят двух ходов.`;
+  return '';
+}
 function dayQuestion(h){
   const sph=SPHERES[CLASSES[clsOf(h)]?.sphere]?.name||'своей сфере';
   const step=STEPS[S.week];
@@ -2143,24 +2166,57 @@ function dayQuestion(h){
     'Какое слово ты сегодня сдержал?',
     'Что сегодня было трудно и как ты с этим справился?',
     'Какой маленький шаг ты сделаешь завтра?',
+    'Что сегодня дало тебе силы?',
+    'Кому из группы ты сегодня мог бы помочь?',
   ];
-  const d=new Date(), n=Math.floor(d.getTime()/86400000);
-  if(d.getDay()===1||d.getDay()===2) return 'Скоро рефлексия. Что важного случилось за эту неделю?';
-  return qs[n%qs.length];
+  const wd=nskDay();
+  if(wd===1||wd===2) return 'Скоро рефлексия. Что важного случилось за эту неделю?';
+  if(wd===3) return 'Что ты унёс со встречи? Какой шаг сделаешь первым?';
+  return qs[Math.floor(Date.now()/DAY)%qs.length];
 }
+
+/* ---------- оценка дня: 5 пиксельных иконок от грозы до солнца ---------- */
+const MOODS=[
+  {n:1,name:'Гроза',g:['............','....gggg....','...gggggg...','..ggggggggg.','.ggggggggggg','gggggggggggg','.GGGGyGGGGG.','.....yy.....','....yy......','...yyyy.....','.....yy.....','....y.......']},
+  {n:2,name:'Дождь',g:['............','....cccc....','...cccccc...','..ccccccccc.','.ccccccccccc','cccccccccccc','.CCCCCCCCCC.','............','..q...q...q.','.q...q...q..','............','...q...q....']},
+  {n:3,name:'Облачно',g:['............','............','............','....cccc....','...cccccc...','..ccccccccc.','.ccccccccccc','cccccccccccc','cccccccccccc','.CCCCCCCCCC.','............','............']},
+  {n:4,name:'Просвет',g:['............','..y.........','y..yyy......','..yyyyy.....','.yyyyyycc...','.yyyyycccc..','..yyycccccc.','...cccccccc.','..cccccccccc','..cccccccccc','...CCCCCCCC.','............']},
+  {n:5,name:'Солнце',g:['............','.....yy.....','.y...yy...y.','..y......y..','....yyyy....','...yyyyyy...','yy.yyyyyy.yy','...yyyyyy...','....yyyy....','..y......y..','.y...yy...y.','.....yy.....']},
+];
+const MOOD_PAL={y:'#ffd34d',c:'#c9d2e8',C:'#8a96ad',g:'#6a6f82',G:'#4a4e60',q:'#5fb4ff'};
+function moodSVG(n,size=34){ const m=MOODS[n-1]; if(!m) return ''; return `<svg viewBox="0 0 12 12" width="${size}" height="${size}" shape-rendering="crispEdges" aria-hidden="true">${rects(m.g,0,0,MOOD_PAL)}</svg>`; }
+function moods(){ return lsGet('gnu_mood_'+ME,{}); }
+function setMood(n){
+  const m=moods(), k=todayKey(); if(m[k]===n) delete m[k]; else m[k]=n; lsSet('gnu_mood_'+ME,m);
+  sfx(n>=4?'coin':'click'); buzz(10);
+  document.querySelectorAll('.moods button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.n===m[k]));
+  const lbl=$('#moodlbl'); if(lbl) lbl.textContent=m[k]?MOODS[m[k]-1].name:'Как прошёл день?';
+}
+function moodRow(){
+  const cur=moods()[todayKey()];
+  return `<div class="moods" role="group" aria-label="Оценка дня">${MOODS.map(m=>`<button data-n="${m.n}" aria-pressed="${cur===m.n}" aria-label="${m.name}" onclick="setMood(${m.n})">${moodSVG(m.n)}</button>`).join('')}</div>
+    <div class="moodlbl" id="moodlbl">${cur?MOODS[cur-1].name:'Как прошёл день?'}</div>`;
+}
+
+/* ---------- записи ---------- */
 function diaryKey(){ return 'gnu_diary_'+ME; }
-function diary(){ try{ return JSON.parse(localStorage.getItem(diaryKey())||'[]'); }catch(e){ return []; } }
-function saveDiary(list){ localStorage.setItem(diaryKey(),JSON.stringify(list)); }
-function addEntry(q,text){
+function diary(){ return lsGet(diaryKey(),[]); }
+function saveDiary(list){ lsSet(diaryKey(),list); }
+function addEntry(q,text,discuss){
   text=(text||'').trim(); if(!text) return false;
-  const list=diary(); list.unshift({at:new Date().toISOString(),q,t:text,w:S.week}); saveDiary(list); return true;
+  const list=diary(); list.unshift({id:Math.random().toString(36).slice(2,9),at:new Date().toISOString(),q,t:text,w:S.week,mood:moods()[todayKey()]||0,discuss:!!discuss,talked:false}); saveDiary(list); return true;
 }
-function localKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function wroteToday(){ const t=todayKey(); return diary().some(e=>localKey(new Date(e.at))===t); }
+function saveFrom(qId,tId,dId){
+  const q=$(qId)?.dataset.q||'', ok=addEntry(q,$(tId).value,$(dId)?.checked);
+  if(!ok) return toast('Напиши хоть пару слов'), false;
+  sfx('page'); buzz(15); toast($(dId)?.checked?'Записано. Возьмёшь это на встречу.':'Записано в дневник'); return true;
+}
 function greetCard(h){
-  if(wroteToday()) return `<div class="greet"><div class="hi">${hello()}, ${esc(firstName(h))}!</div><p style="margin:10px 0 0">Сегодняшняя запись в дневнике уже есть. Ходов накоплено: <b>${sign(calcDelta(h).total)}</b>.</p></div>`;
-  return `<div class="greet"><div class="hi">${hello()}, ${esc(firstName(h))}!</div><p class="q">${esc(dayQuestion(h))}</p>
-    <button class="btn" onclick="greetDlg()">Записать в дневник</button></div>`;
+  const rem=reflReminder();
+  if(wroteToday()) return `<div class="greet"><div class="hi">${hello()}, ${esc(firstName(h))}!</div><p style="margin:10px 0 0">Сегодняшняя запись в дневнике уже есть.${rem?' '+esc(rem):''}</p></div>`;
+  return `<div class="greet"><div class="hi">${hello()}, ${esc(firstName(h))}!</div><p class="q">${esc(dayQuestion(h))}</p>${rem?`<p class="muted" style="font-size:15px">${esc(rem)}</p>`:''}
+    <button class="pbtn small" onclick="greetDlg()">Записать в дневник</button></div>`;
 }
 function maybeGreet(){
   if(!ME||isCurator) return;
@@ -2171,44 +2227,74 @@ function maybeGreet(){
 }
 function greetDlg(){
   const h=H(ME); if(!h) return;
-  const q=dayQuestion(h);
-  openDlg(`<div class="hi" style="font-family:var(--pixel);font-size:12px;line-height:1.7;color:var(--gold)">${hello()}, ${esc(firstName(h))}!</div>
-    <p style="font-size:20px;font-style:italic;line-height:1.4;margin:12px 0">${esc(q)}</p>
+  const q=dayQuestion(h), rem=reflReminder();
+  openDlg(`<div class="hi" tabindex="-1" autofocus style="font-family:var(--pixel);font-size:12px;line-height:1.7;color:var(--gold);outline:0">${hello()}, ${esc(firstName(h))}!</div>
+    <p id="gq" data-q="${esc(q)}" style="font-size:20px;font-style:italic;line-height:1.4;margin:12px 0">${esc(q)}</p>
+    ${rem?`<p class="muted" style="font-size:15px;margin-top:-4px">${esc(rem)}</p>`:''}
+    ${moodRow()}
     <textarea id="gt" placeholder="Пиши как есть. Это видишь только ты." aria-label="Запись в дневник"></textarea>
-    <p class="lock" style="margin-top:8px">Дневник хранится только на этом телефоне. Его не видит ни куратор, ни группа.</p>
-    <div class="row" style="margin-top:12px"><button class="btn" id="gok">Сохранить</button><button class="btn ghost" onclick="closeDlg()">Позже</button></div>`);
-  $('#gok').onclick=()=>{ if(addEntry(q,$('#gt').value)){ closeDlg(); toast('Записано в дневник'); render(); } else toast('Напиши хоть пару слов'); };
-  setTimeout(()=>$('#gt')?.focus(),100);
+    <label class="chk"><input type="checkbox" id="gd"> Хочу обсудить на встрече</label>
+    <p class="lock" style="margin-top:8px">Дневник хранится только на этом телефоне. Его не видит никто, кроме тебя.</p>
+    <div class="row" style="margin-top:12px"><button class="pbtn small" id="gok">Сохранить</button><button class="pbtn small dark" onclick="closeDlg()">Позже</button></div>`);
+  $('#gok').onclick=()=>{ if(saveFrom('#gq','#gt','#gd')){ closeDlg(); render(); } };
 }
 function fmtDate(iso){ const d=new Date(iso); return d.toLocaleDateString('ru-RU',{day:'numeric',month:'long',weekday:'short'})+', '+d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}); }
+function fmtDay(key){ const [y,m,d]=key.split('-').map(Number); return new Date(y,m-1,d).toLocaleDateString('ru-RU',{day:'numeric',month:'long',weekday:'long'}); }
+let diaryView='all';
+function weekStart(){ return nextMeeting()-WEEK; }
+function weekEntries(){ const from=weekStart(); return diary().filter(e=>Date.parse(e.at)>=from); }
+function discussList(){ return diary().filter(e=>e.discuss&&!e.talked); }
 function vDiary(){
-  const h=H(ME); if(!h) return '';
-  const list=diary(), q=dayQuestion(h);
-  const weekList=list.filter(e=>Date.now()-new Date(e.at).getTime()<7*86400000);
-  return `<h2>Мой дневник</h2>
-  <p class="lock">Только для тебя: записи хранятся на этом телефоне и никуда не отправляются.</p>
-  <div class="diary panel"><p style="font-style:italic;font-size:18px;margin-bottom:10px">${esc(q)}</p>
-    <textarea id="dt" placeholder="Что сегодня было?" aria-label="Новая запись"></textarea>
-    <div class="row" style="margin-top:10px"><button class="btn" onclick="if(addEntry(${esc(JSON.stringify(q))},$('#dt').value)){toast('Записано');render();}">Сохранить запись</button></div></div>
-  <div class="panel gold"><b>Рефлексия недели</b><p class="muted" style="margin:6px 0 10px">Соберу твои записи за 7 дней в один текст. Его можно перечитать и взять за основу рефлексии.</p>
-    <button class="btn small" ${weekList.length?'':'disabled'} onclick="weekDlg()">Собрать записи недели (${weekList.length})</button></div>
-  ${list.length?list.map((e,i)=>`<div class="entryd"><div class="when">${esc(fmtDate(e.at))}</div>${e.q?`<div class="qq">${esc(e.q)}</div>`:''}<div class="tx">${esc(e.t)}</div>
-    <button class="linkbtn" onclick="delEntry(${i})">удалить</button></div>`).join(''):'<p class="muted">Записей пока нет. Первая — самая трудная, дальше легче.</p>'}
-  ${list.length?`<div class="row" style="margin-top:10px"><button class="btn ghost small" onclick="exportDiary()">Скачать дневник файлом</button></div>`:''}`;
+  const h=H(ME); if(!h) return ''; diaryMigrate();
+  const list=diary(), q=dayQuestion(h), disc=discussList(), wk=weekEntries();
+  const show=diaryView==='discuss'?list.filter(e=>e.discuss):list;
+  const byDay={}; show.forEach(e=>{ const k=localKey(new Date(e.at)); (byDay[k]=byDay[k]||[]).push(e); });
+  const md=moods(), rem=reflReminder();
+  return `<div class="greet"><div class="hi">${hello()}, ${esc(firstName(h))}!</div><p class="q" id="dq" data-q="${esc(q)}">${esc(q)}</p>${rem?`<p class="muted" style="font-size:15px;margin:-4px 0 10px">${esc(rem)}</p>`:''}
+    ${moodRow()}
+    <textarea id="dt" placeholder="Что сегодня было? Что беспокоит?" aria-label="Новая запись"></textarea>
+    <label class="chk"><input type="checkbox" id="dd"> Хочу обсудить на встрече</label>
+    <div class="row" style="margin-top:10px"><button class="pbtn small" onclick="if(saveFrom('#dq','#dt','#dd'))render()">Сохранить запись</button></div></div>
+  <p class="lock">🔒 Только для тебя: записи хранятся на этом телефоне и никуда не отправляются. Их не видит никто, кроме тебя.</p>
+  ${disc.length?`<div class="panel gold"><b>Обсудить на встрече · ${disc.length}</b>${disc.map(e=>`<div class="disc"><span>${esc(e.t.length>140?e.t.slice(0,140)+'…':e.t)}</span><button class="linkbtn" onclick="toggleTalked('${e.id}')">обсудили ✓</button></div>`).join('')}</div>`:''}
+  <div class="panel"><b>Рефлексия недели</b><p class="muted" style="margin:6px 0 10px;font-size:15px">Соберу записи с прошлой встречи, настроение по дням и то, что хочешь обсудить. Перечитай и возьми за основу рефлексии.</p>
+    <button class="pbtn small" ${wk.length||Object.keys(md).length?'':'disabled'} onclick="weekDlg()">Собрать неделю для рефлексии (${wk.length})</button></div>
+  <div class="seg" role="tablist"><button aria-current="${diaryView==='all'}" onclick="diaryView='all';render()">Все записи · ${list.length}</button><button aria-current="${diaryView==='discuss'}" onclick="diaryView='discuss';render()">Обсудить · ${list.filter(e=>e.discuss).length}</button></div>
+  ${Object.keys(byDay).length?Object.entries(byDay).map(([k,es])=>`<div class="dday"><div class="dd-h">${md[k]?moodSVG(md[k],22):''}<span>${esc(fmtDay(k))}</span></div>
+    ${es.map(e=>`<div class="entryd${e.discuss?' disc-on':''}"><div class="when">${new Date(e.at).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}${e.discuss?` · ${e.talked?'обсудили ✓':'обсудить на встрече'}`:''}</div>${e.q?`<div class="qq">${esc(e.q)}</div>`:''}<div class="tx">${esc(e.t)}</div>
+      <div class="row"><button class="linkbtn" onclick="toggleDiscuss('${e.id}')">${e.discuss?'убрать из «обсудить»':'обсудить на встрече'}</button><button class="linkbtn" onclick="delEntry('${e.id}')">удалить</button></div></div>`).join('')}</div>`).join('')
+    :`<p class="muted">${diaryView==='discuss'?'Здесь появятся записи с флажком «хочу обсудить на встрече».':'Записей пока нет. Первая — самая трудная, дальше легче.'}</p>`}
+  <div class="row" style="margin-top:14px"><button class="pbtn small dark" ${list.length||Object.keys(md).length?'':'disabled'} onclick="exportDiary()">Скачать дневник</button></div>
+  <p class="muted" style="font-size:14px;margin-top:8px">Сменишь телефон или очистишь браузер — записи пропадут. Иногда скачивай дневник файлом.</p>`;
 }
-function delEntry(i){ if(!confirm('Удалить запись?')) return; const l=diary(); l.splice(i,1); saveDiary(l); render(); }
+function editEntry(id,fn){ const l=diary(), e=l.find(x=>x.id===id); if(!e) return; fn(e); saveDiary(l); render(); }
+function toggleDiscuss(id){ editEntry(id,e=>{ e.discuss=!e.discuss; e.talked=false; }); sfx('click'); }
+function toggleTalked(id){ editEntry(id,e=>{ e.talked=true; }); sfx('check'); }
+function delEntry(id){ if(!confirm('Удалить запись?')) return; saveDiary(diary().filter(e=>e.id!==id&&!(e.id==null&&id==='undefined'))); render(); }
+/* старые записи без id получают id при первом открытии */
+function diaryMigrate(){ const l=diary(); if(l.some(e=>!e.id)){ l.forEach(e=>{ if(!e.id) e.id=Math.random().toString(36).slice(2,9); }); saveDiary(l); } }
 function weekText(){
-  return diary().filter(e=>Date.now()-new Date(e.at).getTime()<7*86400000).reverse()
-    .map(e=>`${fmtDate(e.at)}\n${e.q?e.q+'\n':''}${e.t}`).join('\n\n');
+  const h=H(ME), from=weekStart(), md=moods(), wk=weekEntries().slice().reverse();
+  const days=Object.keys(md).filter(k=>{ const [y,m,d]=k.split('-').map(Number); return new Date(y,m-1,d,23,59).getTime()>=from; }).sort();
+  let t=`Рефлексия · неделя ${S.week} «${STEPS[S.week]?.name||''}»\n${firstName(h)}\n\n`;
+  if(days.length) t+='Настроение по дням:\n'+days.map(k=>`  ${fmtDay(k)} — ${MOODS[md[k]-1].name}`).join('\n')+'\n\n';
+  if(wk.length) t+='Записи недели:\n\n'+wk.map(e=>`${fmtDate(e.at)}\n${e.q?'«'+e.q+'»\n':''}${e.t}`).join('\n\n')+'\n\n';
+  const disc=discussList(); if(disc.length) t+='Хочу обсудить на встрече:\n'+disc.map(e=>'  • '+e.t.replace(/\n/g,' ')).join('\n')+'\n';
+  return t.trim();
 }
 function weekDlg(){
-  openDlg(`<h2>Записи за неделю</h2><textarea id="wt" style="min-height:260px">${esc(weekText())}</textarea>
-   <div class="row" style="margin-top:12px"><button class="btn" onclick="copyText($('#wt').value)">Скопировать</button><button class="btn ghost" onclick="closeDlg()">Закрыть</button></div>`);
+  openDlg(`<h2>Неделя для рефлексии</h2><p class="muted" style="font-size:15px">Это черновик: перечитай, поправь и возьми в свою рефлексию.</p><textarea id="wt" style="min-height:300px">${esc(weekText())}</textarea>
+   <div class="row" style="margin-top:12px"><button class="pbtn small" onclick="copyText($('#wt').value)">Скопировать</button>${navigator.share?`<button class="pbtn small dark" onclick="navigator.share({text:$('#wt').value}).catch(()=>{})">Поделиться</button>`:''}<button class="pbtn small dark" onclick="closeDlg()">Закрыть</button></div>`);
+  sfx('page');
 }
-function copyText(t){ (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast('Скопировано')).catch(()=>{ $('#wt')?.select(); toast('Выдели и скопируй вручную'); }); }
+function copyText(t){ (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>{ toast('Скопировано'); sfx('check'); }).catch(()=>{ $('#wt')?.select(); toast('Выдели и скопируй вручную'); }); }
 function exportDiary(){
-  const t=diary().slice().reverse().map(e=>`${fmtDate(e.at)}\n${e.q?e.q+'\n':''}${e.t}`).join('\n\n---\n\n');
-  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([t],{type:'text/plain;charset=utf-8'})); a.download='moy-dnevnik.txt'; a.click();
+  const h=H(ME), md=moods();
+  const head=`Дневник героя · ${nameOf(h)}\nГНУ. Путь героя\nСкачано ${new Date().toLocaleString('ru-RU')}\n\n`;
+  const moodTxt=Object.keys(md).length?'Настроение по дням:\n'+Object.keys(md).sort().map(k=>`  ${fmtDay(k)} — ${MOODS[md[k]-1]?.name||''}`).join('\n')+'\n\n=====\n\n':'';
+  const t=head+moodTxt+diary().slice().reverse().map(e=>`${fmtDate(e.at)}${e.discuss?' · обсудить на встрече':''}\n${e.q?'«'+e.q+'»\n':''}${e.t}`).join('\n\n---\n\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([t],{type:'text/plain;charset=utf-8'})); a.download='moy-dnevnik-'+todayKey()+'.txt'; document.body.appendChild(a); a.click(); a.remove();
+  toast('Дневник скачан'); sfx('check');
 }
 
 /* =====================================================================
