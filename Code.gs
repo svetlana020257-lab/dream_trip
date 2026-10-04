@@ -44,7 +44,7 @@ function publicState_(state, profiles) {
   (s.heroes || []).forEach(h => {
     delete h.code;
     const p = profiles && profiles[h.id];
-    if (p) h.look = { name: p.name || '', cls: p.cls || '', triple: p.triple || '', gear: p.gear || null, onb: !!p.onb };
+    if (p) h.look = { name: p.name || '', cls: p.cls || '', v: p.v == 2 ? 2 : 1, triple: p.triple || '', gear: p.gear || null, onb: !!p.onb };
   });
   return s;
 }
@@ -95,7 +95,8 @@ function doPost(e) {
         name: str(p.name, 40).trim(),
         cls: CLASS_NAMES[p.cls] ? p.cls : '',
         triple: TRIPLE_NAMES[p.triple] ? p.triple : '',
-        gear: { cloak: str(g.cloak, 20), attr: str(g.attr, 20), amulet: str(g.amulet, 20), aura: str(g.aura, 20) },
+        v: p.v == 2 ? 2 : 1,
+        gear: { glow: str(g.glow, 20), aura: str(g.aura, 20), amulet: str(g.amulet, 20), plate: str(g.plate, 20) },
         scroll: { goal: str((p.scroll || {}).goal, 400), train: str((p.scroll || {}).train, 400), boost: str((p.scroll || {}).boost, 400) },
         onb: !!p.onb,
         at: new Date().toISOString(),
