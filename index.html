@@ -1942,12 +1942,42 @@ function vMore(){
    ${DEMO?`<div class="foot"><button class="linkbtn" onclick="localStorage.removeItem('gnu_code');localStorage.removeItem('gnu_hello_'+ME);location.href=location.pathname">Демо: выйти из героя</button></div>`:''}
    <div class="foot"><button class="linkbtn" onclick="loginDlg()">Вход для куратора</button></div>`;
 }
+function faqNorm(t){ return String(t||'').toLowerCase().replace(/ё/g,'е'); }
 function faqBody(){
-  const q=faqQ.trim().toLowerCase();
-  const hl=t=>{ let s=esc(t); if(q){ const re=new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'); s=s.replace(re,'<mark>$1</mark>'); } return s; };
-  const list=faqList().filter(([a,b])=>!q||(a+' '+b).toLowerCase().includes(q));
-  return list.length?list.map(([a,b])=>`<details ${q?'open':''}><summary>${hl(a)}</summary><div class="a">${hl(b)}</div></details>`).join(''):'<p class="muted">Ничего не нашлось. Спроси куратора на встрече.</p>';
+  const q=faqNorm(faqQ.trim());
+  /* подсветка с учётом ё/е: ищем в нормализованной строке, подсвечиваем те же позиции в исходной */
+  const hl=t=>{ const src=String(t); if(!q) return esc(src);
+    const n=faqNorm(src); let res='', pos=0, k;
+    while((k=n.indexOf(q,pos))>=0){ res+=esc(src.slice(pos,k))+'<mark>'+esc(src.slice(k,k+q.length))+'</mark>'; pos=k+q.length; }
+    return res+esc(src.slice(pos)); };
+  const list=faqList().filter(([a,b])=>!q||faqNorm(a+' '+b).includes(q));
+  return list.length?list.map(([a,b])=>`<details ${q?'open':''}><summary>${hl(a)}</summary><div class="a">${hl(b).replace(/\n/g,'<br>')}</div></details>`).join(''):'<p class="muted">Ничего не нашлось. Спроси куратора на встрече.</p>';
 }
+
+/* ---------- куратор: редактор вопросов и ответов ---------- */
+let FQE=null;
+function cFaq(){
+  if(!FQE) FQE=JSON.parse(JSON.stringify(faqList()));
+  return `<p class="muted">Эти вопросы и ответы участники видят во вкладке «Ещё». Править можно здесь или прямо в таблице, на листе <b>«Вопросы»</b>: колонка A — вопрос, B — ответ. Участники увидят изменения при следующем входе.</p>
+   <div class="row" style="margin-bottom:12px"><button class="btn" onclick="faqSave()">Сохранить</button><button class="btn ghost small" onclick="FQE.push(['','']);render();setTimeout(()=>window.scrollTo(0,document.body.scrollHeight),50)">+ Вопрос</button>
+     <button class="btn ghost small" onclick="if(confirm('Вернуть стандартный текст? Твои правки пропадут после сохранения.')){FQE=JSON.parse(JSON.stringify(FAQ_DEFAULT));render();}">Вернуть стандартные</button></div>
+   ${FQE.map(([a,b],i)=>`<div class="panel" style="padding:10px">
+     <div class="row" style="justify-content:space-between"><span class="muted" style="font-size:13px">№ ${i+1}</span><span><button class="linkbtn" ${i?'':'disabled'} onclick="faqMove(${i},-1)">↑ выше</button> <button class="linkbtn" ${i<FQE.length-1?'':'disabled'} onclick="faqMove(${i},1)">↓ ниже</button> <button class="linkbtn" onclick="if(confirm('Удалить вопрос?')){FQE.splice(${i},1);render();}">удалить</button></span></div>
+     <label class="f">Вопрос</label><input class="t" value="${esc(a)}" oninput="FQE[${i}][0]=this.value">
+     <label class="f">Ответ</label><textarea class="t" rows="4" oninput="FQE[${i}][1]=this.value">${esc(b)}</textarea></div>`).join('')}
+   <div class="row"><button class="btn" onclick="faqSave()">Сохранить</button></div>`;
+}
+function faqMove(i,d){ const j=i+d; if(j<0||j>=FQE.length) return; [FQE[i],FQE[j]]=[FQE[j],FQE[i]]; render(); }
+async function faqSave(){
+  const list=FQE.map(([a,b])=>[String(a).trim(),String(b).trim()]).filter(([a,b])=>a&&b);
+  if(!list.length) return toast('Нужен хотя бы один вопрос с ответом');
+  if(DEMO){ FAQ=list; lsSet('gnu_faq',list); FQE=null; render(); return toast('Вопросы сохранены'); }
+  setSync('Сохраняю…');
+  try{ const d=await api({action:'faq',pin,faq:list}); if(d.ok){ FAQ=list; FQE=null; render(); toast('Вопросы сохранены в таблицу'); } else toast(d.error||'Не сохранилось'); }
+  catch(e){ toast('Нет связи с таблицей'); }
+  setSync('');
+}
+
 function bindFaq(){ const i=$('#fq'); i.oninput=()=>{ faqQ=i.value; $('#fbody').innerHTML=faqBody(); }; }
 /* ---------- карта ---------- */
 const MW=400, STEPY=36, MTOP=230, MBOT=120, MH=MTOP+TOP*STEPY+MBOT;
@@ -2121,9 +2151,9 @@ function loginDlg(){
     catch(e){ toast('Нет связи с таблицей'); }
   };
 }
-const CT=[['week','Неделя'],['resolve','Встреча'],['powers','Силы'],['prof','Анкеты'],['tasks','Задания'],['ann','Объявления'],['setup','Герои'],['map','Карта'],['over','Обзор'],['data','Данные']];
+const CT=[['week','Неделя'],['resolve','Встреча'],['powers','Силы'],['prof','Анкеты'],['tasks','Задания'],['faq','Вопросы'],['ann','Объявления'],['setup','Герои'],['map','Карта'],['over','Обзор'],['data','Данные']];
 function vCur(){
-  const sub=({week:cWeek,resolve:cResolve,powers:cPowers,prof:cProfiles,tasks:cTasks,ann:cAnnounce,setup:cSetup,map:cMap,over:vWeek,data:cData}[ctab]||cWeek)();
+  const sub=({week:cWeek,resolve:cResolve,powers:cPowers,prof:cProfiles,tasks:cTasks,faq:cFaq,ann:cAnnounce,setup:cSetup,map:cMap,over:vWeek,data:cData}[ctab]||cWeek)();
   return `<h2>Куратор</h2><div class="subtabs">${CT.map(([k,l])=>`<button aria-current="${ctab===k}" onclick="ctab='${k}';render()">${l}</button>`).join('')}</div>${sub}`;
 }
 function tog(label,pressed,on,bad){ return `<button class="tog${bad?' bad':''}" aria-pressed="${!!pressed}" onclick="${on}">${label}</button>`; }
