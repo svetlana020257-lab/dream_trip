@@ -328,6 +328,31 @@ label.chk input{width:22px;height:22px;accent-color:var(--gold)}
 .disc{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px dashed #a9822f66;font-size:15px}
 .disc:last-child{border-bottom:0}
 .disc .linkbtn{white-space:nowrap;flex:none}
+.mate{display:flex;flex-direction:column;align-items:center}
+.mate .nm{font-weight:700}
+.mate.big .mini{height:120px}
+.mate .thx{margin-top:6px;background:none;border:1px solid var(--gold-dim);color:var(--gold);font-size:12px;padding:5px 6px;cursor:pointer;width:100%}
+.mate .thx:active{background:#3a2f10}
+.tri-head{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+.tri-head svg{width:44px;height:44px;flex:none}
+.tri-lbl{display:flex;align-items:center;gap:8px;font-family:var(--pixel);font-size:10px;margin-bottom:8px}
+.tri-lbl svg{width:22px;height:22px}
+.tri-more{margin-top:10px;font-size:15px}.tri-more summary{cursor:pointer;color:var(--gold)}
+.chart{width:100%;height:auto;display:block}
+.streak{display:grid;grid-template-columns:repeat(11,1fr);gap:4px}
+.sk{aspect-ratio:1;background:#0b1233;border:2px solid #26346f;display:grid;place-items:center}
+.sk.on{border-color:#ff7a4d;background:#3a1a10;box-shadow:0 0 8px #ff7a4d66}
+.sk svg{width:80%;height:80%}
+.badges{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.badge{background:#0b1233;border:2px solid #26346f;padding:10px 4px;text-align:center;cursor:pointer;filter:grayscale(1) brightness(.5)}
+.badge.got{filter:none;border-color:var(--gold);background:linear-gradient(#2c2410,#16122a);box-shadow:0 0 10px #ffd27a33}
+.badge.legend.got{border-color:#b46bff;box-shadow:0 0 16px #b46bff88}
+.badge .bi{width:40px;height:40px;margin:0 auto 6px;display:grid;place-items:center}
+.badge .bi svg{width:100%;height:100%}
+.badge .bn{font-size:12px;line-height:1.25}
+.gcol{margin-bottom:10px}.gcol-h{font-size:13px;color:var(--gold);margin-bottom:6px}
+.items.small{grid-template-columns:repeat(8,1fr);gap:4px}
+.items.small .item{padding:2px}.items.small .lk{font-size:9px;right:1px;top:0}
 .mates{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .mate{background:#0d1640;border:2px solid #26346f;padding:8px 4px;text-align:center;font-size:14px}
 .mate .mini{height:72px}
@@ -727,7 +752,7 @@ async function load(){
     CLAIMS=lsGet('gnu_claims',{}); PROFILES=lsGet('gnu_profiles',{}); FAQ=lsGet('gnu_faq',null);
     S.heroes.forEach(h=>h.look=pickLook(PROFILES[h.id]));
     const h=MYCODE&&S.heroes.find(x=>x.code===MYCODE); ME=h?h.id:null;
-    PROFILE=ME?(PROFILES[ME]||null):null;
+    PROFILE=ME?(PROFILES[ME]||null):null; loadDemoThanks();
     setSync('Демо-режим'); afterLoad(); return;
   }
   setSync('Загружаю…');
@@ -742,6 +767,7 @@ async function load(){
       if(d.faq) FAQ=d.faq;
       ME=d.me||null;
       PROFILE=d.profile||null;
+      THANKS=Array.isArray(d.thanks)?d.thanks:[];
       if(isCurator&&!d.full){ isCurator=false; pin=''; sessionStorage.removeItem('gnu_pin'); }
     }
     setSync('');
@@ -1233,6 +1259,7 @@ function entryQueue(){
   if(recapPending()) return showRecap(false);
   if(newUnlocks().length) return showUnlocks(newUnlocks(),entryQueue);
   if(unseenAnnounce().length) return showAnnounce(entryQueue);
+  if(unseenThanks().length) return showThanks(entryQueue);
   if(checkNewTasks()) return;
   maybeGreet();
 }
@@ -1760,23 +1787,135 @@ function cTasks(){
 }
 
 /* ---------- клан ---------- */
-function mateCard(h){
-  const c=clsOf(h);
-  return `<div class="mate${h.id===ME?' me':''}">${heroMini(lookOfHero(h))}<div>${esc(firstName(h))}</div><div class="c">${esc(CLASSES[c]?.name||'класс не выбран')}</div></div>`;
+/* «отметил задания на этой неделе» — только факт; сервер присылает флаг marked, в демо считаем по заявкам */
+function markedThisWeek(h){
+  if(h.marked!=null&&!DEMO) return !!h.marked;
+  const c=CLAIMS[h.id]; return !!(c&&c.week===S.week&&(c.task||c.refl||(c.min||[]).some(Boolean)||Object.keys(c.personal||{}).length));
+}
+let THANKS=[];   // «спасибо», которые получил я: [{at,from,text}]
+function thanksAll(){ return lsGet('gnu_thanks_all',[]); }
+function loadDemoThanks(){ if(DEMO&&ME) THANKS=thanksAll().filter(t=>t.to===ME); }
+function mateCard(h,big){
+  const c=clsOf(h), me=h.id===ME, mk=markedThisWeek(h);
+  return `<div class="mate${me?' me':''}${big?' big':''}">${heroMini(lookOfHero(h),big?120:72)}<div class="nm">${esc(firstName(h))}${me?' · ты':''}</div><div class="c">${esc(CLASSES[c]?.name||'класс не выбран')}</div>
+    <div class="f ${mk?'plus':'muted'}">${mk?'✓ отметил задания':'пока без отметок'}</div>${h.captured?'<div class="f" style="color:#e7b6f2">⛓ в плену</div>':''}
+    ${me?'':`<button class="thx" onclick="thanksDlg('${h.id}')">Сказать спасибо</button>`}</div>`;
 }
 function vClan(){
   const h=H(ME); const tr=tripleOf(h);
   const mine=tr?S.heroes.filter(x=>tripleOf(x)===tr):[h];
-  return `<h2>Моя тройка${tr?' · '+TRIPLES[tr].name:''}</h2><div class="mates">${mine.map(mateCard).join('')}</div>
-   <h2>Все герои</h2>${TRIPLE_ORDER.map(k=>{ const m=S.heroes.filter(x=>tripleOf(x)===k); return m.length?`<div class="panel" style="padding:10px"><div style="font-family:var(--pixel);font-size:10px;color:${TRIPLES[k].color};margin-bottom:8px">${TRIPLES[k].name}</div><div class="mates">${m.map(mateCard).join('')}</div></div>`:''; }).join('')}
-   ${S.heroes.some(x=>!tripleOf(x))?`<div class="panel" style="padding:10px"><div class="muted" style="margin-bottom:8px">Ещё без тройки</div><div class="mates">${S.heroes.filter(x=>!tripleOf(x)).map(mateCard).join('')}</div></div>`:''}`;
+  const t=TRIPLES[tr], marked=mine.filter(markedThisWeek).length;
+  const capMate=mine.find(x=>x.id!==ME&&x.captured);
+  return `<h2>Моя тройка${t?' · '+t.name:''}</h2>
+   <div class="panel" style="border-color:${t?t.color:'#26346f'}">
+     ${t?`<div class="tri-head">${elSVG(tr)}<div><b style="color:${t.color}">${t.name} · ${TRIPLE_WHAT[tr]}</b><div class="muted" style="font-size:14px">На этой неделе отметили задания: ${marked} из ${mine.length}</div></div></div>`:''}
+     <div class="mates">${mine.map(x=>mateCard(x,true)).join('')}</div>
+     ${capMate?`<p style="margin:10px 0 0">⛓ <b>${esc(firstName(capMate))}</b> в плену. Тройка вытаскивает своих — спросите у куратора задание помощи.</p>`:''}
+     ${t?`<details class="tri-more"><summary>Преимущество и сила тройки</summary><p><b>Преимущество:</b> ${esc(t.plus)}.</p><p><b>Сила (раз за поток):</b> ${esc(t.power)}. ${S.triples[tr]?.used?'Уже применена.':'Ещё не тронута — Печать терпения в силе.'}</p></details>`:''}
+   </div>
+   ${THANKS.length?`<p class="muted" style="text-align:center">Тебе сказали спасибо: <b style="color:var(--gold-hi)">${THANKS.length}</b> ${plural(THANKS.length,'раз','раза','раз')}</p>`:''}
+   <h2>Все герои</h2>${TRIPLE_ORDER.map(k=>{ const m=S.heroes.filter(x=>tripleOf(x)===k); return m.length?`<div class="panel" style="padding:10px"><div class="tri-lbl" style="color:${TRIPLES[k].color}">${elSVG(k)}${TRIPLES[k].name}</div><div class="mates">${m.map(x=>mateCard(x)).join('')}</div></div>`:''; }).join('')}
+   ${S.heroes.some(x=>!tripleOf(x))?`<div class="panel" style="padding:10px"><div class="muted" style="margin-bottom:8px">Ещё без тройки</div><div class="mates">${S.heroes.filter(x=>!tripleOf(x)).map(x=>mateCard(x)).join('')}</div></div>`:''}`;
+}
+function thanksDlg(id){
+  const h=H(id); if(!h) return;
+  const sent=lsGet('gnu_thx_sent_'+ME,{});
+  if(sent[id]===todayKey()) return toast(`Сегодня ты уже благодарил ${firstName(h)}. Завтра можно снова.`);
+  openDlg(`<h2>Спасибо, ${esc(firstName(h))}!</h2><div style="display:grid;place-items:center;margin:4px 0 10px">${heroMini(lookOfHero(h),130)}</div>
+    <p class="muted" style="font-size:15px">${esc(firstName(h))} увидит это при входе. Можно добавить пару слов — за что.</p>
+    <textarea id="thxt" maxlength="200" placeholder="Например: спасибо, что позвонил во вторник"></textarea>
+    <div class="row" style="margin-top:12px"><button class="pbtn small" id="thxok">Отправить спасибо</button><button class="pbtn small dark" onclick="closeDlg()">Отмена</button></div>`);
+  $('#thxok').onclick=async()=>{
+    const text=$('#thxt').value.trim().slice(0,200); $('#thxok').disabled=true;
+    let ok=true;
+    if(DEMO){ const all=thanksAll(); all.push({at:new Date().toISOString(),from:ME,to:id,text}); lsSet('gnu_thanks_all',all); }
+    else { try{ const d=await api({action:'thanks',code:MYCODE,to:id,text}); ok=d.ok; if(!d.ok) toast(d.error||'Не отправилось'); }catch(e){ ok=false; toast('Нет связи, попробуй ещё раз'); } }
+    if(!ok){ $('#thxok').disabled=false; return; }
+    sent[id]=todayKey(); lsSet('gnu_thx_sent_'+ME,sent);
+    closeDlg(); sfx('unlock'); buzz([20,40,20]); toast(`Спасибо отправлено. ${firstName(h)} увидит его при входе.`);
+  };
+}
+function unseenThanks(){ const seen=lsGet('gnu_thx_seen_'+ME,[]); return THANKS.filter(t=>!seen.includes(t.at+t.from)); }
+function showThanks(next){
+  const list=unseenThanks(); if(!list.length) return next&&next();
+  lsSet('gnu_thx_seen_'+ME,[...lsGet('gnu_thx_seen_'+ME,[]),...list.map(t=>t.at+t.from)].slice(-300));
+  sfx('unlock'); salute();
+  openDlg(`<h2>Тебе сказали спасибо!</h2>${list.map(t=>{ const f=H(t.from); return `<div class="panel gold" style="display:flex;gap:12px;align-items:center">${f?heroMini(lookOfHero(f),64):''}<div><b>${esc(f?firstName(f):'Союзник')}</b>${t.text?`<div style="font-style:italic">«${esc(t.text)}»</div>`:'<div class="muted">благодарит тебя</div>'}</div></div>`; }).join('')}
+    <div class="row" style="margin-top:12px"><button class="pbtn small" onclick="closeDlg()">Приятно!</button></div>`);
+  $('#dlg').addEventListener('close',()=>next&&next(),{once:true});
 }
 
 /* ---------- мой путь ---------- */
+function myLog(h){ return S.log.filter(l=>l.hero===h.id&&!l.dark).sort((a,b)=>a.week-b.week); }
+function movesChart(h){
+  const log=myLog(h), {total}=calcDelta(h), pend=pendingFor(h).sum;
+  const weeks=[]; for(let w=2;w<=12;w++) weeks.push(w);
+  const val=w=>{ const l=log.find(x=>x.week===w); return l?l.delta:null; };
+  const vals=weeks.map(val), curW=S.week, cur=S.finished?null:total+pend;
+  const max=Math.max(10,...vals.map(v=>Math.abs(v||0)),Math.abs(cur||0)), W=22, H0=70, base=80;
+  let g='';
+  weeks.forEach((w,i)=>{
+    const x=8+i*W, v=vals[i];
+    if(v!=null){ const hgt=Math.round(Math.abs(v)/max*H0); const y=v>=0?base-hgt:base;
+      g+=`<rect x="${x}" y="${y}" width="${W-6}" height="${Math.max(2,hgt)}" fill="${v>=0?'#e9b84c':'#d0493f'}"/><rect x="${x}" y="${y}" width="${W-6}" height="2" fill="${v>=0?'#fff3c4':'#ff8f86'}"/>
+        <text x="${x+(W-6)/2}" y="${v>=0?y-3:y+Math.max(2,hgt)+9}" text-anchor="middle" font-size="7" fill="#f2e6c6" font-family="Press Start 2P">${sign(v)}</text>`; }
+    else if(w===curW&&cur!=null){ const hgt=Math.round(Math.abs(cur)/max*H0); const y=cur>=0?base-hgt:base;
+      g+=`<rect x="${x}" y="${y}" width="${W-6}" height="${Math.max(2,hgt)}" fill="none" stroke="#e9b84c" stroke-width="1.5" stroke-dasharray="3 2"/><text x="${x+(W-6)/2}" y="${cur>=0?y-3:y+hgt+9}" text-anchor="middle" font-size="7" fill="#a9b3d6" font-family="Press Start 2P">${sign(cur)}</text>`; }
+    g+=`<text x="${x+(W-6)/2}" y="${base+(vals.some(v=>v<0)?24:12)}" text-anchor="middle" font-size="6" fill="${w===curW?'#ffe9b0':'#6a77a8'}" font-family="Press Start 2P">${w}</text>`;
+  });
+  g+=`<rect x="4" y="${base}" width="${weeks.length*W+4}" height="1" fill="#26346f"/>`;
+  return `<svg viewBox="0 0 ${weeks.length*W+14} ${base+(vals.some(v=>v<0)?30:18)}" class="chart" role="img" aria-label="Ходы по неделям">${g}</svg>
+    <p class="muted" style="font-size:13px;text-align:center;margin:4px 0 0">Неделя потока. Пунктир — то, что копится сейчас.</p>`;
+}
+function moodChart(){
+  const md=moods(), days=[]; for(let i=27;i>=0;i--){ const d=new Date(Date.now()-i*DAY); days.push(localKey(d)); }
+  if(!days.some(k=>md[k])) return '<p class="muted">Отмечай погоду дня в дневнике — здесь появится график настроения за четыре недели.</p>';
+  const L=16, CW=5, RH=13; let g='';
+  for(let m=1;m<=5;m++){ const y=(5-m)*RH; g+=`<g transform="translate(1,${y+0.5})">${rects(MOODS[m-1].g,0,0,MOOD_PAL)}</g><rect x="${L}" y="${y+6}" width="${days.length*CW}" height=".4" fill="#26346f"/>`; }
+  const pts=[]; days.forEach((k,i)=>{ const v=md[k]; if(!v) return; const x=L+i*CW+CW/2, y=(5-v)*RH+6.5; pts.push(`${x},${y}`); });
+  g+=`<polyline points="${pts.join(' ')}" fill="none" stroke="#e9b84c" stroke-width=".9" stroke-linejoin="round"/>`;
+  days.forEach((k,i)=>{ const v=md[k]; if(v){ const x=L+i*CW+CW/2, y=(5-v)*RH+6.5; g+=`<rect x="${x-1.4}" y="${y-1.4}" width="2.8" height="2.8" fill="#ffe9b0" stroke="#6b4f17" stroke-width=".5"/>`; }
+    if(i%7===0) g+=`<text x="${L+i*CW}" y="${5*RH+5}" font-size="3.6" fill="#6a77a8" font-family="PT Serif">${new Date(k).getDate()}.${String(new Date(k).getMonth()+1).padStart(2,'0')}</text>`; });
+  return `<svg viewBox="0 0 ${L+days.length*CW+2} ${5*RH+8}" class="chart" role="img" aria-label="Настроение за четыре недели">${g}</svg>`;
+}
+function streakRow(h){
+  const cur=curStreak(h), best=bestStreak(h);
+  const cells=Array.from({length:11},(_,i)=>`<span class="sk${i<cur?' on':''}">${i<cur?elSVG('fire'):''}</span>`).join('');
+  const line=cur>=4?'Это уже характер.':cur>=2?'Держи темп.':cur===1?'Первая неделя без пропусков. Дальше легче.':'Неделя без пропусков: задание потока, рефлексия вовремя и встреча.';
+  return `<div class="streak">${cells}</div><p style="margin:8px 0 0"><b>${cur}</b> ${plural(cur,'неделя','недели','недель')} подряд без пропусков${best>cur?` · рекорд ${best}`:''}. <span class="muted">${line}</span></p>`;
+}
+function badgesFor(h){
+  const log=myLog(h), parts=log.flatMap(l=>(l.parts||[]).map(p=>p[0]));
+  let refl=0,bestRefl=0; log.forEach(l=>{ refl=(l.parts||[]).some(p=>p[0]==='Рефлексия вовремя')?refl+1:0; bestRefl=Math.max(bestRefl,refl); });
+  const paid=k=>tasksFor(h).filter(t=>t.kind===k&&tStatus(t,h)==='paid').length;
+  const tr=tripleOf(h);
+  const am=id=>itemSVG('amulet',id);
+  return [
+    {name:'Первый ход',desc:'Сделать первый ход на встрече',got:log.length>0,icon:am('drop')},
+    {name:'Слово рефлексии',desc:'Четыре рефлексии подряд без опозданий',got:bestRefl>=4,icon:am('star')},
+    {name:'Характер',desc:'Четыре недели подряд без пропусков',got:bestStreak(h)>=4,icon:elSVG('fire')},
+    {name:'Первый потолок',desc:'Пробить первый потолок',got:(h.broken||[]).length>=1,icon:moodSVG(4,40)},
+    {name:'Второй потолок',desc:'Пробить второй потолок',got:(h.broken||[]).length>=2,icon:moodSVG(5,40)},
+    {name:'Самый ценный',desc:'Стать самым ценным участником встречи',got:parts.includes('Самый ценный'),icon:am('sun')},
+    {name:'Рука помощи',desc:'Вытащить союзника из плена',got:paid('help')>0,icon:am('heart')},
+    {name:'Три сферы',desc:'Выполнить три карты сфер',got:paid('sphere')>=3,icon:elSVG('earth')},
+    {name:'Благодарность',desc:'Получить пять «спасибо»',got:THANKS.length>=5,icon:elSVG('water')},
+    {name:'Летописец',desc:'Сделать семь записей в дневнике',got:diary().length>=7,icon:elSVG('air')},
+    {name:'Вершина',desc:'Дойти до вершины',got:h.pos>=TOP,icon:am('eye')},
+    {name:'Печать терпения',desc:'Тройка не тронула силу все 11 недель',got:!!(S.finished&&tr&&!S.triples[tr]?.used),icon:moodSVG(5,40),legend:true},
+  ];
+}
 function vPath(){
-  const h=H(ME);
-  return `<h2>Колесо сфер</h2>${wheelHtml(h)}
-   <p class="muted" style="text-align:center">Ходы по неделям, настроение, серии и значки появятся здесь в следующей части.</p>`;
+  const h=H(ME); if(!h) return '';
+  const unl=unlockedSet(h), b=badgesFor(h), got=b.filter(x=>x.got).length;
+  const gear=GEAR_CATS.map(([k,l])=>{ const list=gearList(k), open=list.filter(it=>!it.lock||unl.has(it.lock)).length; const keep=gearCat; gearCat=k; const items=gearItems(clsOf(h),gearOf(h),unl); gearCat=keep;
+    return `<div class="gcol"><div class="gcol-h">${l} · ${open}/${list.length}</div><div class="items small">${items}</div></div>`; }).join('');
+  return `<h2>Ходы по неделям</h2><div class="panel">${movesChart(h)}</div>
+   <h2>Серия недель</h2><div class="panel">${streakRow(h)}</div>
+   <h2>Колесо сфер</h2><div class="panel">${wheelHtml(h)}<p class="muted" style="font-size:13px;text-align:center;margin:0">Заполняется выполненными картами сфер и неделями с минимумом дня.</p></div>
+   <h2>Настроение</h2><div class="panel">${moodChart()}</div>
+   <h2>Значки · ${got} из ${b.length}</h2><div class="badges">${b.map(x=>`<div class="badge${x.got?' got':''}${x.legend?' legend':''}" title="${esc(x.desc)}" onclick="toast(${esc(JSON.stringify((x.got?'✦ ':'🔒 ')+x.name+': '+x.desc))})"><div class="bi">${x.icon}</div><div class="bn">${esc(x.name)}</div></div>`).join('')}</div>
+   <h2>Гардероб</h2><div class="panel" onclick="wardrobeDlg()" style="cursor:pointer">${gear}<p class="muted" style="font-size:13px;text-align:center;margin:8px 0 0">Нажми, чтобы переодеть героя</p></div>`;
 }
 function wheelHtml(h){
   const keys=Object.keys(SPHERES), cx=110, cy=110, R=90, max=Math.max(4,...keys.map(k=>(h.wheel||{})[k]||0));
