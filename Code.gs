@@ -22,7 +22,7 @@ function doGet(e) {
   if (action === 'state') {
     const state = loadState_();
     const profiles = loadProfiles_();
-    const out = { ok: true, state: publicState_(state, profiles) };
+    const out = { ok: true, state: publicState_(state, profiles), faq: loadFaq_() };
     const hero = heroByCode_(state, p.code);
     if (out.state) {
       out.state.tasks = hero ? tasksForHero_(state, hero, profiles) : [];
@@ -88,7 +88,7 @@ function doPost(e) {
 
     if (body.action === 'state') {
       if (!checkPin_(body.pin)) return json_({ ok: false, error: 'Неверный PIN куратора' });
-      return json_({ ok: true, full: true, state: loadState_(), claims: loadClaims_(), profiles: loadProfiles_() });
+      return json_({ ok: true, full: true, state: loadState_(), claims: loadClaims_(), profiles: loadProfiles_(), faq: loadFaq_() });
     }
 
     if (body.action === 'claim') {
@@ -152,6 +152,18 @@ function doPost(e) {
         }
         sh.appendRow([new Date(), hero.name, to.name, String(body.text || '').slice(0, 200), hero.id, to.id]);
       } finally { lock.releaseLock(); }
+      return json_({ ok: true });
+    }
+
+    if (body.action === 'faq') {
+      if (!checkPin_(body.pin)) return json_({ ok: false, error: 'Неверный PIN куратора' });
+      const list = (Array.isArray(body.faq) ? body.faq : [])
+        .map(r => [String((r || [])[0] || '').trim().slice(0, 300), String((r || [])[1] || '').trim().slice(0, 3000)])
+        .filter(r => r[0] && r[1]).slice(0, 100);
+      if (!list.length) return json_({ ok: false, error: 'Пустой список вопросов' });
+      const lock = LockService.getScriptLock();
+      lock.waitLock(20000);
+      try { saveFaq_(list); } finally { lock.releaseLock(); }
       return json_({ ok: true });
     }
 
@@ -232,6 +244,23 @@ function saveRow_(name, heroId, obj) {
   const i = ids.indexOf(heroId);
   const row = i >= 0 ? i + 1 : last + 1;
   sh.getRange(row, 1, 1, 2).setNumberFormat('@').setValues([[heroId, JSON.stringify(obj)]]);
+}
+
+/* «Вопросы и ответы»: лист «Вопросы», колонка A — вопрос, B — ответ. Его можно править прямо в таблице. */
+function loadFaq_() {
+  const sh = SpreadsheetApp.getActive().getSheetByName('Вопросы');
+  if (!sh) return null;
+  const last = sh.getLastRow();
+  if (last < 2) return null;
+  const rows = sh.getRange(2, 1, last - 1, 2).getDisplayValues()
+    .map(r => [String(r[0]).trim(), String(r[1]).trim()]).filter(r => r[0] && r[1]);
+  return rows.length ? rows : null;
+}
+function saveFaq_(list) {
+  writeTable_('Вопросы', ['Вопрос', 'Ответ'], list);
+  const sh = sheet_('Вопросы');
+  sh.setColumnWidth(1, 280);
+  sh.setColumnWidth(2, 640);
 }
 
 /* «Сказать спасибо»: лист «Спасибо», его удобно читать прямо в таблице */
